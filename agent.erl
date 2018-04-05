@@ -9,25 +9,36 @@ loop () ->
             loop ()
     end.
 
-ring_agent (NextPid) -> ring_agent (NextPid, []).
+ring_agent (NextPid) -> 
+    io:format ("Agent ~p was succesfully started~n", [erlang:self()]),
+    ring_agent (NextPid, []).
 
-ring_agent (NextPid, L) -> 
+ring_agent (NextPid, L) ->
     receive
-        {cmd, Cmd, Id} ->
+        {cmd, Cmd, _} ->
             case Cmd of
                 {sendPid, Pid} -> erlang:send(Pid, pid (NextPid)),
                                   ring_agent (NextPid, L);
 
-                {kill, KillPid} when KillPid != NextPid ->
-                    erlang:send (NextPid, cmd ({kill,KillPid})),
+                {kill, KillPid} when KillPid =/= NextPid ->
+                    erlang:send (NextPid, cmd ({kill, KillPid})),
                     ring_agent(NextPid, L);
 
-                {kill, KillPid} ->
+                {kill, KillPid} when KillPid =:= NextPid ->
                     erlang:send (NextPid, cmd ({die, erlang:self()})),
                     ring_agent (NextPid, L);
+               
+                destroy ->
+                    erlang:send (NextPid, cmd (destroy)),
+                    erlang:exit ("Rcvd destroy signal~n");
 
-                {changeNext, NewPid} ->
-                    ring_agent (NewPid, L)
+                {changeNextPid, NewPid} ->
+                    ring_agent (NewPid, L);
+
+                {die, Murderer} ->
+                    io:format ("I'm ~p and I die now. Pls remember~n", [erlang:self()]),
+                    change_pid (Murderer, NextPid),
+                    erlang:exit("Rcvd kill signal~n")
             end;
 
         {pack, Msg, Id} ->
@@ -71,17 +82,15 @@ ring_topology (NextPid, N) ->
 
 % ------- Utility ----------
 
-hash(Pid) -> erlang:phash2({Pid, now()}).
+hash() -> erlang:phash2({erlang:self(), now()}).
 
-msg(Msg) -> {pack, Msg, hash(erlang:self())}.
+msg(Msg) -> {pack, Msg, hash()}.
 
-cmd(Cmd) -> {cmd, Cmd, hash(erlang:self())}.
+cmd(Cmd) -> {cmd, Cmd, hash()}.
 
-pid (Pid) -> {pid, Pid, hash(erlang:self())}.
+pid (Pid) -> {pid, Pid, hash()}.
 
-                        
-
-
+change_pid (Pid, NewPid) -> erlang:send(Pid, cmd ({changeNextPid, NewPid})).
 
 % ------- Distributed ping -----------
 
@@ -91,16 +100,24 @@ ping (Pid) ->
 % -------- Join the topology ----------
 
 join (Pid) ->
-    erlang:send (Pid, cmd (sendPid)),
+    erlang:send (Pid, cmd ({sendPid, erlang:self()})),
     receive
-        {NextPid, pid} -> 
+        {pid, NextPid, _} -> 
+            io:format ("Received the NextPid ~p for new node~n", [NextPid]),
+            change_pid (Pid, erlang:self()),
+            io:format ("Sent changePid instruction to ~p~n", [Pid]),
             ring_agent (NextPid)
-    end,
-    erlang:send (Pid, cmd({changePid, erlang:self()})).
+    end.
 
 new_node (Pid) ->
     P = erlang:spawn (agent, join, [Pid]),
     io:format("Initiated new agent with Pid ~p~n", [P]).
+
+% ------- Destroy all nodes -------
+
+destroy (Dest) ->
+    erlang:send (Dest, cmd (destroy)).
+
 
 % -------- Kill a node --------
 
@@ -110,8 +127,9 @@ kill(Dest, Kill) ->
 
 % -------- Init a network for tests ------
 
-init() ->
-    {Pid, _} = ring_topology(4),
+init(N) ->
+    {Pid, _} = ring_topology(N),
+    io:format ("~nPassing a ping on the network~n", []),
     ping(Pid),
     Pid.
 
