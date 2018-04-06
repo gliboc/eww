@@ -5,6 +5,11 @@ This project is being written by Guillaume Duboc.
 Its aim is to build a distributed hash table using a ring-shaped topology
 of erlang nodes.
 
+## Usage
+
+Compile the modules using `make`. Then, you can use the `agent` module to spawn a topology
+and manage the nodes of the network.
+
 ## Architecture
 
 ### Agent
@@ -37,3 +42,17 @@ It is used to check if a message was received before.
 
 ACKNOWLEDGEMENTS, though not implemented yet should be used in order to confirm
 no messages were lost, and eventually to detect that a node is sleeping/dead.
+
+### Detecting failure
+
+In order to detect failing nodes, I had two main ideas :
+
+- implement an acknowledgement system where each communication would receive a confirmation. If a node doesn't acknowledge, 
+- after some time, it is considered dead/sleeping
+- implement periodic checks :
+    - local checks, where a node checks on its neighboor
+    - global checks, where an elected node passes a token through the ring and launches a restructuration if the token doesn't go through
+
+Before implementing, I decided that I prefered the latter option. In the first option, the number of acknowledgements would scale linearly with the number of API calls, and I don't think that's a good thing.
+
+
