@@ -125,6 +125,11 @@ kill(Dest, Kill) ->
     erlang:send(Dest, msg({kill, Kill})). 
 
 
+% -------- Message passing ---------
+
+broadcast(Pid, Msg) ->
+    erlang:send (Pid, msg(Msg)).
+
 % -------- Init a network for tests ------
 
 init(N) ->
