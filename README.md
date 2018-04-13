@@ -7,8 +7,23 @@ of erlang nodes.
 
 ## Usage
 
+### Client
+
 Compile the modules using `make`. Then, you can use the `agent` module to spawn a topology
 and manage the nodes of the network.
+
+### Constellation of devices
+
+In order to showcase the use of this program, I would like to create a list
+of wired devices that would run the agent and constitute a shared data system 
+between me and some friends that could host similar devices.
+
+A list of such devices can be found in `devices.txt`. At some points, the 
+client will be able to read into this file and spawn agents on the diffent
+nodes of the topology.
+
+The current list contains only one device :
+- Raspberry Zero W, accessible at 90.66.179.32
 
 ## Architecture
 
