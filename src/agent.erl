@@ -10,7 +10,7 @@
 
 init (NextPid) -> 
     io:format ("Agent ~p was succesfully started~n", [erlang:self()]),
-    loop (#state{nextPid=NextPid}).
+    loop (#state{nextpid=NextPid}).
 
 
 loop (S) ->

@@ -1,4 +1,4 @@
--record(state, {nextPid,
+-record(state, {nextpid,
                 hashes,
                 keys,
                 files}).

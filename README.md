@@ -7,15 +7,18 @@ of erlang nodes.
 
 ## Usage
 
+### Dependencies
+
+This code uses https://github.com/avtobiff/erlang-uuid, which is imported and compiled 
+using `rebar3`. You only need to have `rebar3` installed and accessible to your path.
+
 ### Client
 
-Compile the modules using `erl -make`. This will compile the code and output
-its results inside the `ebin/` directory. 
+Compile the modules using `make`. This will output the compiled code to the different `ebin/`
+directories inside `_build/`. 
 
-Then, type `erl -pa ebin` to start a shell, and use the defined functions
+Then, type `make run` to start an erlang shell which imports this code, and use the defined functions
 to spawn and manage a topology of nodes.
-
-You could also type `make:all([load]).` from an erlang shell.
 
 ### Constellation of devices
 
