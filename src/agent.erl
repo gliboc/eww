@@ -1,7 +1,7 @@
 %% Agent to be spawn on the nodes
 
 -module(agent).
--export([init/1, loop/1]).
+-export([init/1, loop/1, terminate/2]).
 -export([ring_topology/1, ping/1, join/1, new_node/1, 
          destroy/1, kill/2, init_network/1]).
 
@@ -27,6 +27,12 @@ loop (S) ->
         {ping, Id} ->
             loop (handlers:handle_ping (Id, S))
     end.
+
+terminate (KillerPid, S) ->
+    io:format("I'm ~p and I die now. Pls remember~n", [erlang:self()]),
+    transfer:send_legacy (S),
+    com:change_pid (KillerPid, S#state.nextpid),
+    erlang:exit ("Received kill signal~").
 
 
 

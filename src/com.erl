@@ -1,7 +1,7 @@
 %%% Defines messages shapes and communication functions
 
 -module(com).
--export([msg/1, cmd/1, pid/1, request/2]).
+-export([msg/1, cmd/1, pid/1, data_request/2, del_request/1]).
 -export([ask_pid/1, change_pid/2, send_msg/2, broadcast/2]).
 
 
@@ -13,7 +13,9 @@ cmd(Cmd) -> {cmd, Cmd, utils:hash()}.
 
 pid (Pid) -> {pid, Pid, utils:hash()}.
 
-request (Key, ClientPid) -> msg ({req, Key, ClientPid}).
+data_request (Key, ClientPid) -> msg ({req, Key, ClientPid}).
+
+del_request (Key) -> msg ({del, Key}).
 
 % ------ Communication functions -------
 

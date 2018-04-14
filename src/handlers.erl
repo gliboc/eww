@@ -46,7 +46,7 @@ handle_msg (Msg, Ref, S) ->
 process_msg ({req, Key, ClientPid}, S) ->
     transfer:retreive_data ({Key, ClientPid}, S).
 
-fail_msg ({req, Key, ClientPid}, S) ->
+fail_msg ({req, _, ClientPid}, S) ->
     erlang:send(ClientPid, {error, "Key was not found in the network"}),
     S.
 
