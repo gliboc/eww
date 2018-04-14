@@ -1,5 +1,5 @@
 all:
-	erl -make
+	rebar3 compile
 
-shell: all
-	erl -pa ebin/
+run: 
+	erl -pa _build/default/lib/eww/ebin/ -pa _build/default/lib/uuid/ebin/

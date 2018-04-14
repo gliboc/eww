@@ -1,0 +1,6 @@
+{application, eww, [
+    {description, "Binlog Parser"},
+    {vsn, "0.1"},
+    {registered, []},
+    {applications, [kernel, stdlib]}
+]}.
