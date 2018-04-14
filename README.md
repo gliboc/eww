@@ -9,8 +9,13 @@ of erlang nodes.
 
 ### Client
 
-Compile the modules using `make`. Then, you can use the `agent` module to spawn a topology
-and manage the nodes of the network.
+Compile the modules using `erl -make`. This will compile the code and output
+its results inside the `ebin/` directory. 
+
+Then, type `erl -pa ebin` to start a shell, and use the defined functions
+to spawn and manage a topology of nodes.
+
+You could also type `make:all([load]).` from an erlang shell.
 
 ### Constellation of devices
 

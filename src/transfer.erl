@@ -12,13 +12,14 @@ simple_send (Pid, Binary) ->
 simple_receive () ->
     receive
         {Binary, Hash, Pid} ->
-              case erlang:phash2(Binary) =:= Hash of
-                  true -> io:format ("Writing file~n"),
-                          file:write_file ("test-" ++ integer_to_list(Hash) ++ ".dat", Binary),
-
-                          io:format ("Done writing~n");
-                  false -> io:format ("Wrong hash, ignoring file send", [])
-              end
+            case erlang:phash2(Binary) =:= Hash of
+                true -> 
+                    io:format ("Writing file~n"),
+                    file:write_file ("test-" ++ integer_to_list(Hash) ++ ".dat", Binary),
+                    io:format ("Done writing~n");
+                false -> 
+                    io:format ("Wrong hash, ignoring file send", [])
+            end
     end,
     io:format("Re-launching receive~n"),
     simple_receive ().
