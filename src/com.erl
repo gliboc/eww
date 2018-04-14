@@ -13,7 +13,7 @@ cmd(Cmd) -> {cmd, Cmd, utils:hash()}.
 
 pid (Pid) -> {pid, Pid, utils:hash()}.
 
-request (Key, Pid) -> {key, Key, Pid, utils:hash()}.
+request (Key, ClientPid) -> msg ({req, Key, ClientPid}).
 
 % ------ Communication functions -------
 

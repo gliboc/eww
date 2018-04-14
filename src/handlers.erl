@@ -4,6 +4,7 @@
 
 -include_lib("state.hrl").
 
+
 handle_cmd ({sendPid, Pid}, S) -> 
     erlang:send(Pid, com:pid (S#state.nextpid)),
     S;
@@ -30,17 +31,24 @@ handle_cmd ({die, Killer}, S) ->
     erlang:exit("Reiceved kill signal~n"),
     S.
 
+ref_check (Ref, S) ->
+    lists:member (Ref, S#state.hashes).
 
-handle_msg (Msg, Id, S) ->
+handle_msg (Msg, Ref, S) ->
     io:format("Agent ~p received msg ~p~n", [erlang:self(), Msg]),
-    case (lists:member (Id, S#state.hashes)) of
-        true -> S;
+    case ref_check(Ref, S) of
+        true -> 
+            fail_msg (Msg, S);
         false -> 
-            io:format("Agent ~p passing around message ~p to ~p~n", [erlang:self(), Msg, S#state.nextpid]),
-            erlang:send(S#state.nextpid, {pack, Msg, Id}),
-            S#state{hashes=S#state.hashes ++ [Id]}
+            process_msg (Msg, S)
     end.
 
+process_msg ({req, Key, ClientPid}, S) ->
+    transfer:retreive_data ({Key, ClientPid}, S).
+
+fail_msg ({req, Key, ClientPid}, S) ->
+    erlang:send(ClientPid, {error, "Key was not found in the network"}),
+    S.
 
 handle_ping (Id, S) ->
     case (lists:member (Id, S#state.hashes)) of

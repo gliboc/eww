@@ -18,8 +18,8 @@ Question 2
 
 Question 3
 
-- [ ] a)
-- [ ] b)
+- [x] a) `handle_data`
+- [x] b) done using `retrieve_data` which is called when a node receive a request and hash the key in its keys. If it hasn't, it sends it to its next peer. If the key is never found, `fail_msg` warns the client. Todo : recycle `fail_msg`
 - [ ] c)
 - [ ] d)
 - [ ] e)
