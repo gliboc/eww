@@ -37,10 +37,10 @@ The current list contains only one device :
 The `agent.erl` module contains all the functions for spawning a topology with
 listening agents. The supported operations on the agents are :
 	
-- KILL : kill a specific node and reshape the ring
-- DESTROY : destruct all the nodes in the topology
-- JOIN / NEW_NODE : spawn a node and make it join the topology
-- PING : pass a ping through the network
+- `kill` : kill a specific node and reshape the ring
+- `destroy` : destruct all the nodes in the topology
+- `join` / `new_node` : spawn a node and make it join the topology
+- `ping` : pass a ping through the network
 
 ## Communication system
 
@@ -48,19 +48,19 @@ listening agents. The supported operations on the agents are :
 
 The nodes communicate with three different type of message :
 	
-- COMMANDS `{cmd, Cmd, Id}`
-- PACKETS `{pack, Msg, Id}`
-- ACKNOWLEDGEMENTS `{ack, Id}`
-- PID `{pid, Pid}`
+- commands `{cmd, cmd, id}`
+- packets `{pack, msg, id}`
+- acknowledgements `{ack, id}`
+- pid `{pid, pid}`
 
-The main difference between COMMANDS and PACKETS are that commands can be 
+The main difference between `commands` and `packets` are that commands can be 
 adressed to a single node of the network whereas packets should run through
 the entire network.
 
 The `Id` is a hash of the node's Pid and processor time obtained with `now()`.
 It is used to check if a message was received before.
 
-ACKNOWLEDGEMENTS, though not implemented yet should be used in order to confirm
+`acknowledgements`, though not implemented yet should be used in order to confirm
 no messages were lost, and eventually to detect that a node is sleeping/dead.
 
 ### Detecting failure
