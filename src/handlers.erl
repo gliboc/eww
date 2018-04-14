@@ -2,7 +2,7 @@
 -module(handlers).
 -export([handle_cmd/2, handle_msg/3, handle_ping/2]).
 
--record(state, {nextPid, hashes}).
+-include_lib("state.hrl").
 
 handle_cmd ({sendPid, Pid}, S) -> 
     erlang:send(Pid, com:pid (S#state.nextPid)),

@@ -1,7 +1,7 @@
 -module(agent).
 -compile(export_all).
 
--record(state, {nextPid, hashes}).
+-include_lib("state.hrl").
 
 init (NextPid) -> 
     io:format ("Agent ~p was succesfully started~n", [erlang:self()]),
@@ -15,6 +15,9 @@ loop (S) ->
 
         {pack, Msg, Id} ->
             loop (handlers:handle_msg (Msg, Id, S));
+
+        {data, Binary, Hash} ->
+            loop (transfer:handle_data ({Binary, Hash}, S));
 
         {ping, Id} ->
             loop (handlers:handle_ping (Id, S))
