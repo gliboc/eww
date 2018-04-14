@@ -1,16 +1,16 @@
 Question 1
 
-- [x] a) 
-- [ ] b)
-- [ ] c)
-- [ ] d)
+- [x] a) Agent
+- [x] b) Topology
+- [x] c) Join
+- [x] d) Kill
 - [ ] e) / Use 'Naming processes' section of LYEFGG
 
 
 
 Question 2
 
-- [ ] a)
+- [x] a) `com.erl`
 - [ ] b)
 - [ ] c)
 

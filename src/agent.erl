@@ -1,7 +1,12 @@
+%% Agent to be spawn on the nodes
+
 -module(agent).
--compile(export_all).
+-export([init/1, loop/1]).
+-export([ring_topology/1, ping/1, join/1, new_node/1, 
+         destroy/1, kill/2, init_network/1]).
 
 -include_lib("state.hrl").
+
 
 init (NextPid) -> 
     io:format ("Agent ~p was succesfully started~n", [erlang:self()]),
@@ -24,6 +29,10 @@ loop (S) ->
     end.
 
 
+
+% -------- Trying a ring topology --------
+
+
 last_init () ->
     io:format("Initiating first agent\n", []),
     receive
@@ -32,19 +41,18 @@ last_init () ->
     end.
 
 
-% -------- Trying a ring topology --------
-
 ring_topology (N) ->
-io:format("Initiating a ring network with ~p nodes~n", [N]),
-FirstPid = erlang:spawn(agent, last_init, []),
-Pid = ring_topology (FirstPid, N-1),
-erlang:send(FirstPid, {Pid, pid}).
+    io:format("Initiating a ring network with ~p nodes~n", [N]),
+    FirstPid = erlang:spawn(agent, last_init, []),
+    Pid = ring_topology (FirstPid, N-1),
+    erlang:send(FirstPid, {Pid, pid}).
+
 
 ring_topology (NextPid, 0) -> NextPid;
 ring_topology (NextPid, N) ->
-io:format("Initiating agent ~p\n", [N+1]),
-Pid = erlang:spawn(agent, init, [NextPid]),
-ring_topology (Pid, N-1).
+    io:format("Initiating agent ~p\n", [N+1]),
+    Pid = erlang:spawn(agent, init, [NextPid]),
+    ring_topology (Pid, N-1).
 
 
 
