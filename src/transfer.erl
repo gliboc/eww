@@ -7,11 +7,18 @@
 
 -include_lib("state.hrl").
 
+receive_data () ->
+    receive 
+        {nosig, Binary, _} -> Binary;
+        _ -> error
+    end.
+
 simple_send (Pid, Binary) -> 
     erlang:send (Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}).
 
 signed_send (Pid, Binary, Key) ->
     erlang:send (Pid, {sig, Binary, erlang:phash2(Binary), Key, erlang:self()}). 
+
 
 handle_data ({nosig, Binary, Hash, Pid}, S) ->
     case erlang:phash2(Binary) =:= Hash of
