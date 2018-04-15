@@ -1,12 +1,13 @@
 -module(client).
--compile(export_all).
+-export([start/2, stop/1, push/2, pull/3]).
+-export([release/2, deploy/1]).
 
 -include_lib("ping_info.hrl").
 
 start (Host, Platform) ->
     erlang:spawn (Host, agent, join, [Platform]).
 
-retire (Node) ->
+stop (Node) ->
     erlang:send (Node, {die, erlang:self()}),
     receive
         {cmd, {_, Pid}, _} ->

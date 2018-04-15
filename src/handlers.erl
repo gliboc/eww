@@ -32,12 +32,11 @@ handle_cmd({die, Killer}, S) ->
     agent:terminate(Killer, S),
     S.
 
-ref_check(Ref, S) ->
-    lists:member(Ref, S#state.hashes).
+
 
 handle_msg(Msg, Ref, S) ->
     io:format("Agent ~p received msg ~p~n", [erlang:self(), Msg]),
-    case ref_check(Ref, S) of
+    case utils:ref_check(Ref, S) of
         true -> 
             terminate_msg(Msg, S);
         false -> 
@@ -50,7 +49,6 @@ process_msg({start_election}, S) ->
     S#state{elect=cand};
 
 process_msg({elect, Proc}, S) ->
-    
     if S#state.elect == cand ->
           
         case Proc =:= S#state.proc of
@@ -92,12 +90,11 @@ process_msg({del, Key}, S) ->
 process_msg({ping, Ping}, S) ->
     io:format("Agent ~p was pinged~n", [erlang:self()]),
     Nodes = Ping#ping_info.nb_nodes + 1,
-    Hashes = Ping#ping_info.nb_hashes + lists:lenght(S#state.hashes),
-    Keys = Ping#ping_info.nb_keys + lists:length(S#state.keys),
-    com:send_ping(S#state.nextpid, 
-                  Ping#ping_info{nb_nodes=Nodes,
-                                 nb_hashes=Hashes,
-                                 nb_keys=Keys}),
+    Hashes = Ping#ping_info.nb_hashes + erlang:length(S#state.hashes),
+    Keys = Ping#ping_info.nb_keys + erlang:length(S#state.keys),
+    com:send_ping(S#state.nextpid, Ping#ping_info{nb_nodes=Nodes,
+                                    nb_hashes=Hashes,
+                                    nb_keys=Keys}),
     S.
 
 

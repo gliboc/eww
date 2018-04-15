@@ -31,7 +31,4 @@ send_ping (Pid, Ping) ->
     erlang:send(Pid, ping(Ping)).
 
 broadcast (Pid, Msg) ->
-    erlang:send (Pid, agent:msg(Msg)).
-
-
-    
+    erlang:send (Pid, msg(Msg)).

@@ -3,7 +3,8 @@
 %
 
 -module(transfer).
--compile(export_all).
+-export([handle_data/2, retrieve_data/2, delete_data/2, send_legacy/1,
+        receive_data/0]).
 
 -include_lib("state.hrl").
 
@@ -45,7 +46,7 @@ handle_data ({sig, Binary, Hash, Key, _}, S) ->
 
 
 retrieve_data ({Key, Pid}, S) ->
-    case lists:mem(Key, S#state.keys) of
+    case lists:member(Key, S#state.keys) of
         true ->
             read_and_send (Key ++ ".dat", Pid),
             S;
@@ -56,7 +57,7 @@ retrieve_data ({Key, Pid}, S) ->
 
 delete_data (Key, S) ->
     com:send_msg (S#state.nextpid, com:del_request(Key)),
-    case lists:mem (Key, S#state.keys) of
+    case lists:member(Key, S#state.keys) of
         true ->
             Filename = Key ++ ".dat",
             file:delete(Filename),

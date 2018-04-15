@@ -10,7 +10,7 @@
 
 init(NextPid) -> 
     io:format("Agent ~p was succesfully started~n", [erlang:self()]),
-    loop(#state{nextpid=NextPid,
+    loop(#state{nextpid=NextPid, 
                 proc=uuid:uuid4()}).
 
 
@@ -52,7 +52,8 @@ ring_topology(N) ->
     erlang:send(FirstPid, {pid, Pid}).
 
 
-ring_topology(NextPid, 0) -> NextPid;
+ring_topology(NextPid, 0) -> 
+    NextPid;
 ring_topology(NextPid, N) ->
     io:format("Initiating agent ~p\n", [N+1]),
     Pid = erlang:spawn(agent, init, [NextPid]),

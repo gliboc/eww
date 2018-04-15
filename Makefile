@@ -7,7 +7,7 @@ run:
 	erl -pa _build/default/lib/eww/ebin/ -pa _build/default/lib/uuid/ebin/
 
 docs:
-	$(REBAR) doc skip_deps=true
+	$(REBAR) edoc skip_deps=true
 
 test: common_test
 
@@ -22,3 +22,6 @@ state:
 
 dializer:
 	$(REBAR) dialyzer
+
+clean:
+	$(REBAR) clean
