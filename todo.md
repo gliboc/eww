@@ -1,6 +1,6 @@
 Question 1
 
-- [x] a) Agent
+- [x] a) Initialize an agent using `agent:init`, or simply by spawning its core function, `agent:loop`. This loop calls differents handlers to treat the messages it receives. These handlers are defined in `handlers.erl` and `transfer.erl`.
   - [ ] test 
 - [x] b) Topology
   - [ ] test
