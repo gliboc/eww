@@ -44,25 +44,30 @@ handle_msg(Msg, Ref, S) ->
             process_msg(Msg, Ref, S#state{refs=S#state.refs++[Ref]})
     end.
 
+process_msg({bcast, Msg}, Ref, S) ->
+    erlang:send(S#state.nextpid, {pack, {bcast, Msg}, Ref}),
+    process_msg(Msg, Ref, S);
 
-process_msg({start_election}, _, S) ->
-    com:send_msg(S#state.nextpid, com:msg({elect, S#state.proc})),
+process_msg(start_election, _, S) ->
+    com:send_msg(S#state.nextpid, {elect, S#state.proc}),
     S#state{elect=cand};
 
 process_msg({elect, Proc}, _, S) ->
     if S#state.elect == cand ->
-          
+        io:format("This node ~p is candidate~n", [erlang:self()]),          
         case Proc =:= S#state.proc of
-            true -> 
+            true ->
+                io:format("Proc received is the same as internal~n", []),
                 case S#state.proc =:= S#state.min_cand of
-                    true -> 
+                    true ->
+                        io:format("This node ~p just got elected~n", [erlang:self()]),
                         S#state{elect=leader};
                     false ->
                         S#state{elect=lost}
                 end;
 
             false ->
-                com:send_msg(S#state.nextpid, com:msg({elect, Proc})),
+                com:send_msg(S#state.nextpid, {elect, Proc}),
 
                 case Proc < S#state.min_cand of 
                     true ->
@@ -73,7 +78,7 @@ process_msg({elect, Proc}, _, S) ->
         end;
 
     true ->
-        com:send_msg(S#state.nextpid, com:msg({elect, Proc})),
+        com:send_msg(S#state.nextpid, {elect, Proc}),
         
         if S#state.elect == sleep ->
             S#state{elect=lost};
@@ -96,8 +101,16 @@ process_msg({ping, Ping}, Ref, S) ->
     com:send_ping(S#state.nextpid, Ping#ping_info{nb_nodes=Nodes,
                                     nb_refs=Refs,
                                     nb_keys=Keys}, Ref),
+    S;
+
+process_msg(give_status, Ref, S) ->
+    io:format("Agent ~p has status: ~p~n", [erlang:self(), S#state.elect]),
+    erlang:send(S#state.nextpid, {pack, give_status, Ref}),
     S.
 
+
+terminate_msg({bcast, _}, S) ->
+    S;
 
 terminate_msg({req, _, ClientPid}, S) ->
     erlang:send(ClientPid, {error, "Key was not found in the network"}),
@@ -107,4 +120,7 @@ terminate_msg({ping, Ping}, S) ->
     io:format("Terminate ping, sending it to ~p~n", [Ping#ping_info.clientpid]),
     C = erlang:send(Ping#ping_info.clientpid, Ping),
     io:format("Sent message ~p~n", [C]),
+    S;
+
+terminate_msg(give_status, S) ->
     S.

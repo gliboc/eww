@@ -5,17 +5,18 @@
 -module(transfer).
 -export([handle_data/2, retrieve_data/2, delete_data/2, send_legacy/1,
         receive_data/0]).
+-export([read_and_send/2, read_and_send/3]).
 
 -include_lib("state.hrl").
 
 receive_data () ->
     receive 
-        {nosig, Binary, _} -> Binary;
-        _ -> error
+        {data, {nosig, Binary, Hash, _}} -> {Binary, Hash};
+        _ -> {error, wrong_type_data} 
     end.
 
 simple_send (Pid, Binary) -> 
-    erlang:send (Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}).
+    erlang:send (Pid, com:data({nosig, Binary, erlang:phash2(Binary), erlang:self()})).
 
 signed_send (Pid, Binary, Key) ->
     erlang:send (Pid, {sig, Binary, erlang:phash2(Binary), Key, erlang:self()}). 
@@ -26,7 +27,7 @@ handle_data ({nosig, Binary, Hash, Pid}, S) ->
         true -> 
             io:format ("Writing file~n"),
             Key = uuid:to_string(uuid:uuid4()),
-            file:write_file (Key ++ ".dat", Binary),
+            file:write_file ("data/" ++ Key ++ ".dat", Binary),
             io:format ("Done writing~n"),
             com:send_msg(Pid, {key, Key}),
             S#state{keys=S#state.keys ++ [Key]};
@@ -38,7 +39,7 @@ handle_data ({nosig, Binary, Hash, Pid}, S) ->
 handle_data ({sig, Binary, Hash, Key, _}, S) ->
     case erlang:phash2(Binary) =:= Hash of
         true ->
-            file:write_file (Key ++ ".dat", Binary),
+            file:write_file ("data/" ++ Key ++ ".dat", Binary),
             S#state{keys=S#state.keys ++ [Key]};
         false ->
             S
@@ -48,10 +49,10 @@ handle_data ({sig, Binary, Hash, Key, _}, S) ->
 retrieve_data ({Key, Pid}, S) ->
     case lists:member(Key, S#state.keys) of
         true ->
-            read_and_send (Key ++ ".dat", Pid),
+            read_and_send ("data/" ++ Key ++ ".dat", Pid),
             S;
         false ->
-            com:send_msg (S#state.nextpid, com:data_request(Key, Pid)),
+            com:send_msg (S#state.nextpid, {req, Key, Pid}),
             S
     end.
 

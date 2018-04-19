@@ -1,6 +1,7 @@
 -module(client).
 -export([start/2, stop/1, push/2, pull/3, ping/1]).
 -export([release/2, deploy/1]).
+-export([give_status/1]).
 
 -include_lib("ping_info.hrl").
 
@@ -22,15 +23,23 @@ push (Filename, Platform) ->
             UUID
     end.
 
+
 pull (Name, UUID, Platform) ->
-    com:send_msg(Platform, {req, UUID, self:erlang()}),
-    Binary = transfer:receive_data (),
-    io:format("Writing file ~p~n", [Name]),
-    file:write_file(Name, Binary),
-    io:format("Done~n").
+    com:send_msg(Platform, {req, UUID, erlang:self()}),
+    {Binary, Hash} = transfer:receive_data (),
+    Filename = "data_rcv/" ++ Name,
+    io:format("Writing file ~p~n", [Filename]),
+    case erlang:phash2(Binary) =:= Hash of
+        true ->
+            file:write_file(Filename, Binary);
+        false ->
+            {error, wrong_hash_corrupted_file}
+    end.
+
 
 release (UUID, Platform) ->
     com:send_msg(Platform, com:del_request(UUID)).
+
 
 init_ping () ->
     #ping_info{clientpid=erlang:self(),
@@ -63,3 +72,11 @@ deploy (NextPid, [H | T]) ->
     io:format("Starting an agent on ~p~n", [H]),
     Pid = erlang:spawn(H, agent, init, [NextPid]),
     deploy (Pid, T).
+
+
+
+
+% ------- Misc functions; for testing purposes --------
+
+give_status (Platform) ->
+    com:send_msg(Platform, give_status).

@@ -10,10 +10,15 @@
 
 init(NextPid) -> 
     io:format("Agent ~p was succesfully started~n", [erlang:self()]),
+    Proc = uuid:uuid4(),
+    filelib:ensure_dir("data/"),
+    filelib:ensure_dir("data_rcv/"),
     loop(#state{nextpid=NextPid, 
-                proc=uuid:uuid4(),
+                proc=Proc,
                 refs=[],
-                keys=[]}).
+                keys=[],
+                elect=sleep,
+                min_cand=Proc}).
 
 
 loop(S) ->
@@ -25,7 +30,17 @@ loop(S) ->
             loop(handlers:handle_msg(Msg, Ref, S));
 
         {data, Data} ->
-            loop(transfer:handle_data(Data, S))
+            loop(transfer:handle_data(Data, S));
+        _ ->
+            io:format("Received wrong message type~n",[]),
+            loop(S)
+        after 1000 ->
+            if S#state.elect == leader ->
+                   io:format("~p performing sanity check~n", [erlang:self()]),
+                   loop(S);
+            true ->
+                   loop(S)
+            end
     end.
 
 terminate(KillerPid, S) ->
@@ -99,7 +114,7 @@ kill(Platform, Kill) ->
 % -------- Start an election --------
 
 start_elect (Pid) ->
-    com:send_msg(Pid, com:msg({start_election})).
+    com:send_msg(Pid, start_election).
 
 
 % -------- Init a network for tests ------
