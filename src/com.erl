@@ -2,7 +2,7 @@
 
 -module(com).
 -export([msg/1, cmd/1, pid/1, ping/1, data_request/2, del_request/1]).
--export([ask_pid/1, change_pid/2, send_msg/2, send_ping/2, broadcast/2]).
+-export([ask_pid/1, change_pid/2, send_msg/2, send_ping/3, broadcast/2]).
 
 
 % ------ Message constructors ----------
@@ -27,8 +27,8 @@ change_pid (Pid, NewPid) ->
 send_msg (Pid, Msg) ->
     erlang:send(Pid, msg(Msg)).
 
-send_ping (Pid, Ping) ->
-    erlang:send(Pid, ping(Ping)).
+send_ping (Pid, Ping_Infos, Ref) ->
+    erlang:send(Pid, {pack, {ping, Ping_Infos}, Ref}).
 
 broadcast (Pid, Msg) ->
     erlang:send (Pid, msg(Msg)).

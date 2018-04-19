@@ -2,7 +2,7 @@
 
 -module(agent).
 -export([init/1, loop/1, terminate/2]).
--export([ring_topology/1, ping/1, join/1, new_node/1, 
+-export([ring_topology/1, last_init/0, ping/1, join/1, new_node/1, 
          destroy/1, kill/2, init_network/1, start_elect/1]).
 
 -include_lib("state.hrl").
@@ -11,7 +11,9 @@
 init(NextPid) -> 
     io:format("Agent ~p was succesfully started~n", [erlang:self()]),
     loop(#state{nextpid=NextPid, 
-                proc=uuid:uuid4()}).
+                proc=uuid:uuid4(),
+                refs=[],
+                keys=[]}).
 
 
 loop(S) ->
@@ -19,8 +21,8 @@ loop(S) ->
         {cmd, Cmd, _} ->
             loop(handlers:handle_cmd(Cmd, S));
 
-        {pack, Msg, Id} ->
-            loop(handlers:handle_msg(Msg, Id, S));
+        {pack, Msg, Ref} ->
+            loop(handlers:handle_msg(Msg, Ref, S));
 
         {data, Data} ->
             loop(transfer:handle_data(Data, S))
@@ -49,10 +51,10 @@ ring_topology(N) ->
     io:format("Initiating a ring network with ~p nodes~n", [N]),
     FirstPid = erlang:spawn(agent, last_init, []),
     Pid = ring_topology(FirstPid, N-1),
-    erlang:send(FirstPid, {pid, Pid}).
+    erlang:send(FirstPid, {pid, Pid}),
+    {ok, FirstPid}.
 
-
-ring_topology(NextPid, 0) -> 
+ring_topology(NextPid, 0) ->
     NextPid;
 ring_topology(NextPid, N) ->
     io:format("Initiating agent ~p\n", [N+1]),
@@ -84,14 +86,14 @@ new_node(Pid) ->
 
 % ------- Destroy all nodes -------
 
-destroy(Dest) ->
-    erlang:send(Dest, com:cmd(destroy)).
+destroy(Platform) ->
+    erlang:send(Platform, com:cmd(destroy)).
 
 
 % -------- Kill a node --------
 
-kill(Dest, Kill) ->
-    erlang:send(Dest, com:msg({kill, Kill})). 
+kill(Platform, Kill) ->
+    erlang:send(Platform, com:cmd({kill, Kill})). 
 
 
 % -------- Start an election --------

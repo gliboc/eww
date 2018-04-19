@@ -2,6 +2,6 @@
                 elect,
                 min_cand,
                 nextpid,
-                hashes,
+                refs,
                 keys,
                 files}).

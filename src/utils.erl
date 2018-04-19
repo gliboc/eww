@@ -7,4 +7,4 @@
 hash() -> erlang:phash2({erlang:self(), erlang:system_time()}).
 
 ref_check(Ref, S) ->
-    lists:member(Ref, S#state.hashes).
+    lists:member(Ref, S#state.refs).

@@ -6,7 +6,7 @@
 -include_lib("ping_info.hrl").
 
 
-handle_cmd({sendPid, Pid}, S) -> 
+handle_cmd({sendpid, Pid}, S) -> 
     erlang:send(Pid, com:pid(S#state.nextpid)),
     S;
 
@@ -23,7 +23,7 @@ handle_cmd(destroy, S) ->
     erlang:exit("Rcvd destroy signal~n"),
     S;
 
-handle_cmd({changeNextPid, NewPid}, S) ->
+handle_cmd({changenextpid, NewPid}, S) ->
     S#state{nextpid=NewPid};
 
 handle_cmd({die, Killer}, S) ->
@@ -35,20 +35,21 @@ handle_cmd({die, Killer}, S) ->
 
 
 handle_msg(Msg, Ref, S) ->
-    io:format("Agent ~p received msg ~p~n", [erlang:self(), Msg]),
-    case utils:ref_check(Ref, S) of
+    io:format("Agent ~p received msg ~p with ref ~p~n", [erlang:self(), Msg, Ref]),
+    io:format("Agent ~p has refs ~p~n", [erlang:self(), S#state.refs]),
+    case (utils:ref_check(Ref, S)) of
         true -> 
             terminate_msg(Msg, S);
-        false -> 
-            process_msg(Msg, S)
+        false ->
+            process_msg(Msg, Ref, S#state{refs=S#state.refs++[Ref]})
     end.
 
 
-process_msg({start_election}, S) ->
+process_msg({start_election}, _, S) ->
     com:send_msg(S#state.nextpid, com:msg({elect, S#state.proc})),
     S#state{elect=cand};
 
-process_msg({elect, Proc}, S) ->
+process_msg({elect, Proc}, _, S) ->
     if S#state.elect == cand ->
           
         case Proc =:= S#state.proc of
@@ -81,20 +82,20 @@ process_msg({elect, Proc}, S) ->
         end
     end;
 
-process_msg({req, Key, ClientPid}, S) ->
+process_msg({req, Key, ClientPid}, _, S) ->
     transfer:retrieve_data({Key, ClientPid}, S);
 
-process_msg({del, Key}, S) ->
+process_msg({del, Key}, _, S) ->
     transfer:delete_data(Key, S);
 
-process_msg({ping, Ping}, S) ->
+process_msg({ping, Ping}, Ref, S) ->
     io:format("Agent ~p was pinged~n", [erlang:self()]),
     Nodes = Ping#ping_info.nb_nodes + 1,
-    Hashes = Ping#ping_info.nb_hashes + erlang:length(S#state.hashes),
+    Refs = Ping#ping_info.nb_refs + erlang:length(S#state.refs),
     Keys = Ping#ping_info.nb_keys + erlang:length(S#state.keys),
     com:send_ping(S#state.nextpid, Ping#ping_info{nb_nodes=Nodes,
-                                    nb_hashes=Hashes,
-                                    nb_keys=Keys}),
+                                    nb_refs=Refs,
+                                    nb_keys=Keys}, Ref),
     S.
 
 
@@ -103,5 +104,7 @@ terminate_msg({req, _, ClientPid}, S) ->
     S;
 
 terminate_msg({ping, Ping}, S) ->
-    erlang:send(Ping#ping_info.clientpid, Ping),
+    io:format("Terminate ping, sending it to ~p~n", [Ping#ping_info.clientpid]),
+    C = erlang:send(Ping#ping_info.clientpid, Ping),
+    io:format("Sent message ~p~n", [C]),
     S.

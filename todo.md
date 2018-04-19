@@ -1,13 +1,23 @@
 Question 1
 
 - [x] a) Initialize an agent using `agent:init`, or simply by spawning its core function, `agent:loop`. This loop calls differents handlers to treat the messages it receives. These handlers are defined in `handlers.erl` and `transfer.erl`.
-  - [ ] test 
+    - [x] test `init` agent
+    - [ ] test `loop` function
+        - [ ] test `loop` handlers
+            - [ ] test `handlers:handle_cmd`
+            - [ ] test `handlers:handle_msg` 
+            - [ ] test `transfer:handle_data` 
 - [x] b) Topology
-  - [ ] test
+  - [x] test 
+    - [x] `ring_topology` 
+    - [x] `last_init` 
 - [x] c) Join
-  - [ ] test
+  - [x] test
+    - [x] `join` 
+    - [x] `new_node` 
 - [x] d) Kill
-  - [ ] test
+  - [ ] test `kill`
+  - [ ] `destroy` 
 - [ ] e) / Use 'Naming processes' section of LYEFGG
 
 
@@ -51,7 +61,7 @@ Question 4 CLI `client.erl`
 - [x] e) Function `client:release`, using a msg structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`
   - [ ] test
 - [x] f) Using `client:ping` : the ping goes through all the network, adding up the number of nodes, the number of hashes kept (ie the number of messages that passed through the network), and the number of keys (ie the number of files that are being kept).
-  - [ ] test 
+  - [x] test - works fine
   - [ ] Todo: find a way to give out the total size of the files, to give node-specific information (by naming them ?), and to find the size of the biggest/lowest file that is being stored. Other cool data that would require nodes to maintain an history : size of data that was exchanged since the network started, number of files since the network started, number of push/pull operations, up-time of each node, ping time of each node in ms, ping time of the global network.
 - [x] g) `client:deploy` deploy a ring-shaped topology of nodes using the `Nodes` list of adresses.
   - [ ] test
