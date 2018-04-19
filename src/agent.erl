@@ -10,10 +10,12 @@
 
 init(NextPid) -> 
     io:format("Agent ~p was succesfully started~n", [erlang:self()]),
-    Proc = uuid:uuid4(),
+
     filelib:ensure_dir("data/"),
     filelib:ensure_dir("data_rcv/"),
-    loop(#state{nextpid=NextPid, 
+
+    Proc = uuid:uuid4(),
+    loop (#state{nextpid=NextPid, 
                 proc=Proc,
                 refs=[],
                 keys=[],
@@ -31,10 +33,13 @@ loop(S) ->
 
         {data, Data} ->
             loop(transfer:handle_data(Data, S));
+        
         _ ->
-            io:format("Received wrong message type~n",[]),
+            io:format("wrong message type~n",[]),
             loop(S)
+    
         after 1000 ->
+
             if S#state.elect == leader ->
                    io:format("~p performing sanity check~n", [erlang:self()]),
                    loop(S);
@@ -45,9 +50,12 @@ loop(S) ->
 
 terminate(KillerPid, S) ->
     io:format("I'm ~p and I die now. Pls remember~n", [erlang:self()]),
+    io:format("Sending data and keys to ~p~n", [S#state.nextpid]), 
+
     transfer:send_legacy(S),
+    io:format("Legacy was delivered~n"),
     com:change_pid(KillerPid, S#state.nextpid),
-    erlang:exit("Received kill signal~").
+    erlang:exit(received_kill_signal).
 
 
 
@@ -107,8 +115,8 @@ destroy(Platform) ->
 
 % -------- Kill a node --------
 
-kill(Platform, Kill) ->
-    erlang:send(Platform, com:cmd({kill, Kill})). 
+kill(Platform, Target) ->
+    erlang:send(Platform, com:cmd({kill,Target, erlang:self()})). 
 
 
 % -------- Start an election --------

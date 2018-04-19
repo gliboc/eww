@@ -26,14 +26,22 @@ push (Filename, Platform) ->
 
 pull (Name, UUID, Platform) ->
     com:send_msg(Platform, {req, UUID, erlang:self()}),
-    {Binary, Hash} = transfer:receive_data (),
-    Filename = "data_rcv/" ++ Name,
-    io:format("Writing file ~p~n", [Filename]),
-    case erlang:phash2(Binary) =:= Hash of
-        true ->
-            file:write_file(Filename, Binary);
-        false ->
-            {error, wrong_hash_corrupted_file}
+    {Status, Data} = transfer:receive_data (),
+
+    case {Status, Data} of
+        {error, _} -> {error, Data};
+
+        {ok, {Binary, Hash}} -> 
+            Filename = "data_rcv/" ++ Name,
+            io:format("Writing file ~p~n", [Filename]),
+            case erlang:phash2(Binary) =:= Hash of
+                true ->
+                    file:write_file(Filename, Binary);
+                false ->
+                    {error, wrong_or_corrupted_file}
+            end;
+
+        {ok, _} -> {error, received_wrong_data_type}
     end.
 
 
@@ -45,7 +53,8 @@ init_ping () ->
     #ping_info{clientpid=erlang:self(),
                nb_nodes=0,
                nb_refs=0,
-               nb_keys=0}.
+               nb_keys=0,
+               keys=[]}.
 
 
 ping (Platform) ->

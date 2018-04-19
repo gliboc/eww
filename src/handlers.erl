@@ -10,12 +10,12 @@ handle_cmd({sendpid, Pid}, S) ->
     erlang:send(Pid, com:pid(S#state.nextpid)),
     S;
 
-handle_cmd({kill, KillPid}, S) when KillPid =/= S#state.nextpid ->
-    erlang:send(S#state.nextpid, com:cmd({kill, KillPid})),
+handle_cmd({kill, KillPid, Client}, S) when KillPid =/= S#state.nextpid ->
+    erlang:send(S#state.nextpid, com:cmd({kill, KillPid, Client})),
     S;
 
-handle_cmd({kill, KillPid}, S) when KillPid =:= S#state.nextpid ->
-    erlang:send(S#state.nextpid, com:cmd({die, erlang:self()})),
+handle_cmd({kill, KillPid, Client}, S) when KillPid =:= S#state.nextpid ->
+    erlang:send(S#state.nextpid, com:cmd({die, erlang:self(), Client})),
     S;
 
 handle_cmd(destroy, S) ->
@@ -26,10 +26,16 @@ handle_cmd(destroy, S) ->
 handle_cmd({changenextpid, NewPid}, S) ->
     S#state{nextpid=NewPid};
 
-handle_cmd({die, Killer}, S) ->
+handle_cmd({die, Killer, Client}, S) ->
     io:format("I'm ~p and I die now. Pls remember~n", [erlang:self()]),
     com:change_pid(Killer, S#state.nextpid),
-    agent:terminate(Killer, S),
+    try
+        agent:terminate(S#state.nextpid, S)
+    catch 
+        exit:_ -> ok
+    end,
+    io:format("Succesful termination; sending ok signal~n"),
+    erlang:send(Client, ok),
     S.
 
 
@@ -37,7 +43,9 @@ handle_cmd({die, Killer}, S) ->
 handle_msg(Msg, Ref, S) ->
     io:format("Agent ~p received msg ~p with ref ~p~n", [erlang:self(), Msg, Ref]),
     io:format("Agent ~p has refs ~p~n", [erlang:self(), S#state.refs]),
-    case (utils:ref_check(Ref, S)) of
+    io:format("Agent ~p has keys ~p~n", [erlang:self(), S#state.keys]),
+
+    case utils:ref_check(Ref, S) of
         true -> 
             terminate_msg(Msg, S);
         false ->
@@ -55,12 +63,15 @@ process_msg(start_election, _, S) ->
 process_msg({elect, Proc}, _, S) ->
     if S#state.elect == cand ->
         io:format("This node ~p is candidate~n", [erlang:self()]),          
+
         case Proc =:= S#state.proc of
             true ->
                 io:format("Proc received is the same as internal~n", []),
+
                 case S#state.proc =:= S#state.min_cand of
                     true ->
                         io:format("This node ~p just got elected~n", [erlang:self()]),
+
                         S#state{elect=leader};
                     false ->
                         S#state{elect=lost}
@@ -87,24 +98,29 @@ process_msg({elect, Proc}, _, S) ->
         end
     end;
 
-process_msg({req, Key, ClientPid}, _, S) ->
-    transfer:retrieve_data({Key, ClientPid}, S);
+process_msg({req, Key, ClientPid}, Ref, S) ->
+    transfer:retrieve_data({Key, ClientPid}, Ref, S);
 
 process_msg({del, Key}, _, S) ->
     transfer:delete_data(Key, S);
 
 process_msg({ping, Ping}, Ref, S) ->
     io:format("Agent ~p was pinged~n", [erlang:self()]),
+
     Nodes = Ping#ping_info.nb_nodes + 1,
     Refs = Ping#ping_info.nb_refs + erlang:length(S#state.refs),
-    Keys = Ping#ping_info.nb_keys + erlang:length(S#state.keys),
+    NKeys = Ping#ping_info.nb_keys + erlang:length(S#state.keys),
+    Keys = Ping#ping_info.keys ++ S#state.keys,
+
     com:send_ping(S#state.nextpid, Ping#ping_info{nb_nodes=Nodes,
-                                    nb_refs=Refs,
-                                    nb_keys=Keys}, Ref),
+                                                  nb_refs=Refs,
+                                                  nb_keys=NKeys,
+                                                  keys=Keys    }, Ref),
     S;
 
 process_msg(give_status, Ref, S) ->
     io:format("Agent ~p has status: ~p~n", [erlang:self(), S#state.elect]),
+
     erlang:send(S#state.nextpid, {pack, give_status, Ref}),
     S.
 
@@ -113,11 +129,12 @@ terminate_msg({bcast, _}, S) ->
     S;
 
 terminate_msg({req, _, ClientPid}, S) ->
-    erlang:send(ClientPid, {error, "Key was not found in the network"}),
+    erlang:send(ClientPid, {error, key_not_found}),
     S;
 
 terminate_msg({ping, Ping}, S) ->
     io:format("Terminate ping, sending it to ~p~n", [Ping#ping_info.clientpid]),
+
     C = erlang:send(Ping#ping_info.clientpid, Ping),
     io:format("Sent message ~p~n", [C]),
     S;
