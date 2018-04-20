@@ -4,7 +4,7 @@
 
 -module(transfer).
 -export([simple_send/2, signed_send/3]).
--export([handle_data/2, retrieve_data/3, delete_data/2, send_legacy/1,
+-export([handle_data/2, retrieve_data/3, delete_data/3, send_legacy/1,
         receive_data/0]).
 -export([read_and_send/2, read_and_send/3]).
 
@@ -13,7 +13,8 @@
 receive_data () ->
     receive 
         {data, {nosig, Binary, Hash, _}} -> {ok, {Binary, Hash}};
-        Thing -> {error, {wrong_type_data, Thing}} 
+        {error, Reason} -> {error, Reason};
+        _ -> {error, wrong_msg_type}
     end.
 
 simple_send (Pid, Binary) -> 
@@ -65,8 +66,8 @@ retrieve_data ({Key, Pid}, Ref, S) ->
             S
     end.
 
-delete_data (Key, S) ->
-    com:send_msg (S#state.nextpid, com:del_request(Key)),
+delete_data (Key, Ref, S) ->
+    erlang:send(S#state.nextpid, com:del_request(Key, Ref)),
     case lists:member(Key, S#state.keys) of
         true ->
             Filename = Key ++ ".dat",

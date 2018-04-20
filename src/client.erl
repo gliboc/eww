@@ -46,7 +46,7 @@ pull (Name, UUID, Platform) ->
 
 
 release (UUID, Platform) ->
-    com:send_msg(Platform, com:del_request(UUID)).
+    erlang:send(Platform, {pack, {del, UUID}, utils:hash()}).
 
 
 init_ping () ->

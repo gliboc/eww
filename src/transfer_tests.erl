@@ -1,6 +1,6 @@
 -module(transfer_tests).
--export([pull_test/0, terminate_test/0]).
-
+-export([pull_test/0, terminate_test/0, release_test/0]).
+-include_lib("stdlib/include/assert.hrl").
 
 pull_test () ->
     io:format("This program tests the ability to store data
@@ -22,7 +22,7 @@ pull_test () ->
 terminate_test () ->
     io:format("This program tests the ability of a node killed
     remotely to pass its data and keys to the next node. Data should
-    still be accessible by querying the network with the same key.~n",[]),
+    still be accessible by querying the network with the same key.~n"),
     
     {_, Pid} = agent:ring_topology(6),
     transfer:read_and_send("3648.mp4", Pid),
@@ -44,4 +44,17 @@ terminate_test () ->
         ok -> client:pull("term-test", Key, NPid);
         not_ok -> {error, kill_op_failed}
     end.
-    
+   
+
+release_test () ->
+    io:format("Tests the release command.~n"),
+
+    {_, Pid} = agent:ring_topology(6),
+    transfer:read_and_send("3648.mp4", Pid),
+    Key = receive
+         {pack, {key, K}, _} -> K;
+         _ -> error
+    end,
+
+    client:release(Key, Pid),
+    ?assert({error, key_not_found} == client:pull("shouldnwork", Key, Pid)).

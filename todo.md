@@ -61,7 +61,7 @@ Question 4 CLI `client.erl`
 - [x] d) This is the `client:pull` function. It stores its data in the `data_rcv` directory,.
   - [x] test
 - [x] e) Function `client:release`, using a msg structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`
-  - [ ] test
+  - [x] test `release_test` function, using `?assert` macro 
 - [x] f) Using `client:ping` : the ping goes through all the network, adding up the number of nodes, the number of hashes kept (ie the number of messages that passed through the network), and the number of keys (ie the number of files that are being kept).
   - [x] test - works fine
   - [ ] Todo: find a way to give out the total size of the files, to give node-specific information (by naming them ?), and to find the size of the biggest/lowest file that is being stored. Other cool data that would require nodes to maintain an history : size of data that was exchanged since the network started, number of files since the network started, number of push/pull operations, up-time of each node, ping time of each node in ms, ping time of the global network.

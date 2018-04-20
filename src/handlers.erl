@@ -101,8 +101,8 @@ process_msg({elect, Proc}, _, S) ->
 process_msg({req, Key, ClientPid}, Ref, S) ->
     transfer:retrieve_data({Key, ClientPid}, Ref, S);
 
-process_msg({del, Key}, _, S) ->
-    transfer:delete_data(Key, S);
+process_msg({del, Key}, Ref, S) ->
+    transfer:delete_data(Key, Ref, S);
 
 process_msg({ping, Ping}, Ref, S) ->
     io:format("Agent ~p was pinged~n", [erlang:self()]),
@@ -125,12 +125,13 @@ process_msg(give_status, Ref, S) ->
     S.
 
 
-terminate_msg({bcast, _}, S) ->
-    S;
+terminate_msg({bcast, _}, S) -> S;
 
 terminate_msg({req, _, ClientPid}, S) ->
     erlang:send(ClientPid, {error, key_not_found}),
     S;
+
+terminate_msg({del, _}, S) -> S;
 
 terminate_msg({ping, Ping}, S) ->
     io:format("Terminate ping, sending it to ~p~n", [Ping#ping_info.clientpid]),
@@ -139,5 +140,4 @@ terminate_msg({ping, Ping}, S) ->
     io:format("Sent message ~p~n", [C]),
     S;
 
-terminate_msg(give_status, S) ->
-    S.
+terminate_msg(give_status, S) -> S.
