@@ -5,6 +5,7 @@
 
 -include_lib("ping_info.hrl").
 
+
 start (Host, Platform) ->
     erlang:spawn (Host, agent, join, [Platform]).
 
@@ -63,11 +64,22 @@ ping (Platform) ->
     receive
         FinalPing ->
             io:format("Ping made it through the ring~n",[]),
-            FinalPing
+            pprint_ping(FinalPing)
     after 1000 ->
         {error, no_response, erlang:self()}
     end.
 
+
+pprint_ping({ping_info, CPid, NbNodes, NRefs, Keys, NKeys, _, _}) ->
+    io:format
+    ("=======================================================
+== Agent ~p asked for a report on the network ===~n=======================================================
+    Keys stored: ~p
+    Number of keys stored: ~p
+    Number of nodes: ~p
+    Number of messages exchanged: ~p~n",
+    [CPid, Keys, NKeys, NbNodes, NRefs]).
+                
 
 
 deploy ([H | T]) ->

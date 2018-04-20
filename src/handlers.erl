@@ -7,19 +7,19 @@
 
 
 handle_cmd({sendpid, Pid}, S) -> 
-    erlang:send(Pid, com:pid(S#state.nextpid)),
+    com:send_pid(Pid, com:pid(S#state.nextpid)),
     S;
 
 handle_cmd({kill, KillPid, Client}, S) when KillPid =/= S#state.nextpid ->
-    erlang:send(S#state.nextpid, com:cmd({kill, KillPid, Client})),
+    com:send_cmd(S#state.nextpid, {kill, KillPid, Client}),
     S;
 
 handle_cmd({kill, KillPid, Client}, S) when KillPid =:= S#state.nextpid ->
-    erlang:send(S#state.nextpid, com:cmd({die, erlang:self(), Client})),
+    com:send_cmd(S#state.nextpid, {die, erlang:self(), Client}),
     S;
 
 handle_cmd(destroy, S) ->
-    erlang:send(S#state.nextpid, com:cmd(destroy)),
+    com:send_cmd(S#state.nextpid, destroy),
     erlang:exit("Rcvd destroy signal~n"),
     S;
 
@@ -53,7 +53,7 @@ handle_msg(Msg, Ref, S) ->
     end.
 
 process_msg({bcast, Msg}, Ref, S) ->
-    erlang:send(S#state.nextpid, {pack, {bcast, Msg}, Ref}),
+    com:send_msg(S#state.nextpid, {bcast, Msg}, Ref),
     process_msg(Msg, Ref, S);
 
 process_msg(start_election, _, S) ->
@@ -121,7 +121,7 @@ process_msg({ping, Ping}, Ref, S) ->
 process_msg(give_status, Ref, S) ->
     io:format("Agent ~p has status: ~p~n", [erlang:self(), S#state.elect]),
 
-    erlang:send(S#state.nextpid, {pack, give_status, Ref}),
+    com:send_msg(S#state.nextpid, give_status, Ref),
     S.
 
 

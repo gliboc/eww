@@ -33,7 +33,7 @@ loop(S) ->
 
         {data, Data} ->
             loop(transfer:handle_data(Data, S));
-        
+
         _ ->
             io:format("wrong message type~n",[]),
             loop(S)

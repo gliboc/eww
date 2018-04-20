@@ -3,7 +3,7 @@
 %
 
 -module(transfer).
--export([simple_send/2, signed_send/3]).
+-export([simple_send/2, signed_send/3, simple_send/3, signed_send/4]).
 -export([handle_data/2, retrieve_data/3, delete_data/3, send_legacy/1,
         receive_data/0]).
 -export([read_and_send/2, read_and_send/3]).
@@ -18,13 +18,16 @@ receive_data () ->
     end.
 
 simple_send (Pid, Binary) -> 
-    erlang:send (Pid, com:data({nosig, Binary, erlang:phash2(Binary), erlang:self()})).
+    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}).
+
+simple_send (Pid, Binary, Replicate) -> 
+    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self(), Replicate}).
 
 signed_send (Pid, Binary, Key) ->
-    io:format("Sending signed data to ~p~n", [Pid]),
+    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key}). 
 
-    erlang:send (Pid, com:data({sig, Binary, erlang:phash2(Binary), Key, erlang:self()})). 
-
+signed_send (Pid, Binary, Key, Replicate) ->
+    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key, Replicate}). 
 
 handle_data ({nosig, Binary, Hash, Pid}, S) ->
     case erlang:phash2(Binary) =:= Hash of
@@ -40,7 +43,37 @@ handle_data ({nosig, Binary, Hash, Pid}, S) ->
             S
     end;
 
-handle_data ({sig, Binary, Hash, Key, _}, S) ->
+handle_data ({nosig, Binary, Hash, Pid, 0}, S) ->
+    handle_data ({nosig, Binary, Hash, Pid}, S);
+
+handle_data ({nosig, Binary, Hash, Pid, N}, S) ->
+    case erlang:phash2(Binary) =:= Hash of
+        true ->
+            Key = uuid:to_string(uuid:uuid4()),
+            file:write_file ("data/" ++ Key ++ ".dat", Binary),
+            com:send_msg(Pid, {key, Key}),
+            signed_send (S#state.nextpid, Binary, Key, N-1),
+            S#state{keys=S#state.keys ++ [Key]};
+        false ->
+            io:format ("Wrong hash, ignoring file send~n"),
+            S
+    end;
+
+handle_data ({sig, Binary, Hash, Key, 0}, S) ->
+    handle_data ({sig, Binary, Hash, Key}, S);
+
+handle_data ({sig, Binary, Hash, Key, N}, S) ->
+    case erlang:phash2(Binary) =:= Hash of
+        true ->
+            file:write_file ("data/" ++ Key ++ ".dat", Binary),
+            signed_send (S#state.nextpid, Binary, Key, N-1),
+            S#state{keys=S#state.keys ++ [Key]};
+        false ->
+            io:format("Wrong hash, ignoring file send~n"),
+            S
+    end;
+
+handle_data ({sig, Binary, Hash, Key}, S) ->
     io:format("~p received signed data~n", [erlang:self()]),
 
     case erlang:phash2(Binary) =:= Hash of
@@ -56,13 +89,14 @@ handle_data ({sig, Binary, Hash, Key, _}, S) ->
     end.
 
 
+
 retrieve_data ({Key, Pid}, Ref, S) ->
     case lists:member(Key, S#state.keys) of
         true ->
             read_and_send ("data/" ++ Key ++ ".dat", Pid),
             S;
         false ->
-            erlang:send(S#state.nextpid, {pack, {req, Key, Pid}, Ref}),
+            com:send_msg(S#state.nextpid, {req, Key, Pid}, Ref),
             S
     end.
 

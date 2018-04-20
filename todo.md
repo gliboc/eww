@@ -7,15 +7,15 @@ Question 1
             - [ ] write extensive testing for `handlers:handle_cmd`
             - [ ] `handlers:handle_msg` 
             - [ ]  `transfer:handle_data` 
-- [x] b) Topology
+- [x] b) Spawning a ring-shaped topology.
   - [x] test 
     - [x] `ring_topology` 
     - [x] `last_init` 
-- [x] c) `agent:join`
+- [x] c) `agent:join` allows an agent to join the topology. `new_node` spawns an agent and has it join the topology.
   - [x] test
     - [x] `join` 
     - [x] `new_node` 
-- [x] d) `agent:kill`
+- [x] d) `agent:kill` asks the platform to kill a designated target. `destroy` makes the network self-destruct.
   - [x] test `kill` - works for any target node
   - [x] `destroy` works 
 - [ ] e) / Use 'Naming processes' section of LYEFGG
@@ -42,8 +42,8 @@ Question 3
   - [x] test
 - [x] c) The terminate function transfers all of a node's data and keys to its peer. It sends pre-signed data to its peer, so the peer doesn't have to generate an UUID; it just writes the data and stores the key as its own.
   - [x] test function : `transfer_tests:terminate_test`
-- [x] d) A message, {del, Key}, can be passed around to delete the associated File from all nodes of the network.
-  - [ ] test
+- [x] d) A message, `{del, Key}`, can be passed around to delete the associated file from all nodes of the network.
+  - [x] test
 - [ ] e)
 - [ ] f)
 - [ ] g)
@@ -53,14 +53,14 @@ Question 3
 Question 4 CLI `client.erl`
 
 - [x] a) Function `client:start`. Very basic atm
-  - [ ] test
+    - [ ] test
 - [x] b) Function `client:retire`. Sketchy at best.
   - [ ] test
-- [x] c) `client:push` function. Very bad atm : just sends data to the first node it knows about.
+- [x] c) `client:push` function. Very bad atm : it just sends data to the first node it knows about.
   - [ ] test
 - [x] d) This is the `client:pull` function. It stores its data in the `data_rcv` directory,.
   - [x] test
-- [x] e) Function `client:release`, using a msg structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`
+- [x] e) Function `client:release`, using a msg structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`. This is actually the same as q3 d)
   - [x] test `release_test` function, using `?assert` macro 
 - [x] f) Using `client:ping` : the ping goes through all the network, adding up the number of nodes, the number of hashes kept (ie the number of messages that passed through the network), and the number of keys (ie the number of files that are being kept).
   - [x] test - works fine
