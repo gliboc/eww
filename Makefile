@@ -1,7 +1,12 @@
-REBAR=rebar3
+REBAR=./rebar3
 
-all:
+
+
+all: rebar3 
 	$(REBAR) compile
+
+rebar3 : 
+	wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
 
 run: 
 	erl -pa _build/default/lib/eww/ebin/ -pa _build/default/lib/uuid/ebin/
