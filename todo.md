@@ -2,11 +2,11 @@ Question 1
 
 - [x] a) Initialize an agent using `agent:init`, or simply by spawning its core function, `agent:loop`. This loop calls differents handlers to treat the messages it receives. These handlers are defined in `handlers.erl` and `transfer.erl`.
     - [x] test `init` agent
-    - [ ] test `loop` function
-        - [ ] test `loop` handlers
-            - [ ] test `handlers:handle_cmd`
-            - [ ] test `handlers:handle_msg` 
-            - [ ] test `transfer:handle_data` 
+    - [x] test `loop` function
+        - [x] test `loop` handlers
+            - [ ] write extensive testing for `handlers:handle_cmd`
+            - [ ] `handlers:handle_msg` 
+            - [ ]  `transfer:handle_data` 
 - [x] b) Topology
   - [x] test 
     - [x] `ring_topology` 
@@ -75,4 +75,4 @@ Others:
 
 - [ ] Implement authentification using indigo-dc/oidcc erlang implementation of the OpenId Connect protocol
 - [ ] Have functions reply with `{ok, Result}` or `{error, Reason}` forms, and log the errors
-- [ ] Implement types using Dialyzer
+- [x] Type analysis using Dialyzer
