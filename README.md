@@ -10,7 +10,7 @@ of erlang nodes.
 ### Dependencies
 
 This code uses https://github.com/avtobiff/erlang-uuid, which is imported and compiled 
-using `rebar3`. `rebar3` is downloaded automatically from `https://s3.amazonaws.com/rebar3/rebar3` when you launch `make` for the first time. This link is given at https://github.com/erlang/rebar3 and contains the latest compiled version for `rebar3`. 
+using `rebar3`. `rebar3` is downloaded automatically from https://s3.amazonaws.com/rebar3/rebar3 when you launch `make` for the first time. This link is given at https://github.com/erlang/rebar3 and contains the latest compiled version for `rebar3`. 
 
 ### Client
 
