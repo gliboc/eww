@@ -3,6 +3,7 @@
 %
 
 -module(transfer).
+-export([simple_send/2, signed_send/3]).
 -export([handle_data/2, retrieve_data/3, delete_data/2, send_legacy/1,
         receive_data/0]).
 -export([read_and_send/2, read_and_send/3]).

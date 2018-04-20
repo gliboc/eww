@@ -20,7 +20,7 @@ rel:
 state:
 	$(REBAR) release -d
 
-dializer:
+dialyzer:
 	$(REBAR) dialyzer
 
 clean:
