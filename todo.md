@@ -76,3 +76,20 @@ Others:
 - [ ] Implement authentification using indigo-dc/oidcc erlang implementation of the OpenId Connect protocol
 - [ ] Have functions reply with `{ok, Result}` or `{error, Reason}` forms, and log the errors
 - [x] Type analysis using Dialyzer
+- [ ] Implement termination to be used in the case when it is useful (for example, wait for some large data to have been completely scattered on the ring before querying it)
+
+
+
+Problems:
+
+- [ ] when a node dies, the redundancy number of its data is reduced by 1, and there is no control mechanism to ensure it goes up afterwards. So, if all the original nodes die, data may disappear from the network.
+
+
+
+What I'll probably won't do but found interesting:
+
+- [ ] routing using the key. In algorithms such as Chord or Kademlia, the structure of the key helps in finding the node where this data is stored. This leads to faster lookup in theory.
+  In practice, I'm not interested in very big scalability just yet and prefer to implement features and fault tolerance, since I plan to use this software for my own purposes.
+- [ ] An elaborate topology. I found de Bruijn graphs quite interesting, as in Koorde they allow an optimal lookup for data ($$O(\log(n))$$) - the structure in itself is also interesting. But - creating and managing de Bruijn graphs is difficult and less documented than rings. And, again, I wouldn't see much difference in my case.
+- [ ] Termination checks and passive/active nodes. This is useful in order to prevent some activities from being launched during a time when processes are busy doing some critical task. Before implementing this, I want to identify real errors that could be solved using this safety check.
+  - Possibility : wait for some large data to have been completely scattered on the ring before querying it

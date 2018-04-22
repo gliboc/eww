@@ -1,5 +1,5 @@
 {application, eww, [
-    {description, "Binlog Parser"},
+    {description, "distributed file storage system"},
     {vsn, "0.1"},
     {registered, []},
     {applications, [kernel, stdlib]}

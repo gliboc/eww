@@ -9,12 +9,14 @@
 start (Host, Platform) ->
     erlang:spawn (Host, agent, join, [Platform]).
 
+
 stop (Node) ->
     erlang:send (Node, {die, erlang:self()}),
     receive
         {cmd, {_, Pid}, _} ->
             Pid
     end.
+
 
 push (Filename, Platform) ->
     {ok, Binary} = file:read_file(Filename),
@@ -64,7 +66,8 @@ ping (Platform) ->
     receive
         FinalPing ->
             io:format("Ping made it through the ring~n",[]),
-            pprint_ping(FinalPing)
+            pprint_ping(FinalPing),
+            FinalPing
     after 1000 ->
         {error, no_response, erlang:self()}
     end.

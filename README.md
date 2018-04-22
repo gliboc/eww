@@ -62,8 +62,20 @@ listening agents. The supported operations on the agents are :
 
 This application uses a ring-shaped topology that is mostly uni-directionnal. Each node is constantly linked with one peer, but can establish direct connections with the client when transferring data.
 
+#### Fault tolerance
+
+This topology is very useful for checking the integrity of the network: you can send a message throughout the whole system and see if it makes it through the ring. When it doesn't make it, one node at the cut extremity is asked to repair the network. It can be done by trying to respawn an agent on the unresponsive node. If it can't be done, there are two possibilities:
+
+ - This node has a valid sequence of successor nodes, and it connects to its next node
+ - If this doesn't work, the node that checked the sanity of the network can recover the address of the node on the other extremity, and give it to this node.
+
+This last approach is problematic because it might create a forest of distinct rings, so I have disabled it until I can find a way to tackle this issue.
+
+Therefore, the nodes are forced to regularly check they have a list of correct successor nodes. This is done by the function `fault:check_successors` which is activated when the token `sanity_check` passes through the system. This token is regularly sent by the leader node.
+
+#### Communication system
+
 The nodes communicate with four different type of message :
-	
 - commands `{cmd, Cmd, Ref}`
 - packets `{pack, Msg, Ref}`
 - data streams `{data, Msg, Ref}`
@@ -102,4 +114,25 @@ This code is type-checked using `dialyzer`, which you can do by calling `make di
 ### Tests
 
 There are modules being build with the names `?MODULE_tests.erl` in order to test the most important functions in the app. For example, `transfer_tests.erl` tests the data transfer and other features.
+
+
+## Going further
+
+### Fault tolerance
+
+My first approach was to try to come up with an asynchronous solution to faulty nodes. I would have 
+liked to tie up a self-stabilization algorithm with a "safety-checking" node that would dynamically
+check the sanity of the network and try to repair it.
+
+But this paper discouraged me:
+- Fischer, Michael J., Nancy A. Lynch, and Michael S. Paterson. "Impossibility of distributed consensus with one faulty process." Journal of the ACM (JACM) 32.2 (1985): 374-382.
+
+So I decided to resort to Erlang builtin's monitors and supervisors, that allow to report problems that
+occurred in synchronous communications, and react accordingly. Though I will try to implement a self-stabilizing
+algorithm to make sure there is always a supervisor up and running.
+
+I wanted to try an asynchronous solution because I dislike having to duplicate communications to send
+acknowledgement and I thought it would lead to faster communications in the network. 
+
+
 
