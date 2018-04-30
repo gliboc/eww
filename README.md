@@ -124,8 +124,7 @@ My first approach was to try to come up with an asynchronous solution to faulty 
 liked to tie up a self-stabilization algorithm with a "safety-checking" node that would dynamically
 check the sanity of the network and try to repair it.
 
-But this paper discouraged me:
-- Fischer, Michael J., Nancy A. Lynch, and Michael S. Paterson. "Impossibility of distributed consensus with one faulty process." Journal of the ACM (JACM) 32.2 (1985): 374-382.
+But the paper [@fischer1985impossibility] discouraged me from doing so.
 
 So I decided to resort to Erlang builtin's monitors and supervisors, that allow to report problems that
 occurred in synchronous communications, and react accordingly. Though I will try to implement a self-stabilizing
