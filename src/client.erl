@@ -5,11 +5,11 @@
 
 -include_lib("ping_info.hrl").
 
-
+%% @doc Start an agent on a host, and have it join a network.
 start (Host, Platform) ->
     erlang:spawn (Host, agent, join, [Platform]).
 
-
+%% @doc Stop an agent.
 stop (Node) ->
     erlang:send (Node, {die, erlang:self()}),
     receive
@@ -17,7 +17,7 @@ stop (Node) ->
             Pid
     end.
 
-
+%% @doc Upload a file to the network, and receive a key to access it.
 push (Filename, Platform) ->
     {ok, Binary} = file:read_file(Filename),
     transfer:simple_send(Platform, Binary),
@@ -26,7 +26,7 @@ push (Filename, Platform) ->
             UUID
     end.
 
-
+%% @doc Download a file from the network using its unique key.
 pull (Name, UUID, Platform) ->
     com:send_msg(Platform, {req, UUID, erlang:self()}),
     {Status, Data} = transfer:receive_data (),
@@ -47,7 +47,7 @@ pull (Name, UUID, Platform) ->
         {ok, _} -> {error, received_wrong_data_type}
     end.
 
-
+%% @doc Delete a file from the platform.
 release (UUID, Platform) ->
     erlang:send(Platform, {pack, {del, UUID}, utils:hash()}).
 
@@ -60,6 +60,7 @@ init_ping () ->
                keys=[]}.
 
 
+%% @doc Have a ping go through a network to gather information.
 ping (Platform) ->
     Ping = init_ping(),
     com:send_ping(Platform, Ping, utils:hash()),
@@ -73,6 +74,7 @@ ping (Platform) ->
     end.
 
 
+%% @doc Pretty-print a ping that has gone through a network.
 pprint_ping({ping_info, CPid, NbNodes, NRefs, Keys, NKeys, _, _}) ->
     io:format
     ("=======================================================
@@ -84,7 +86,7 @@ pprint_ping({ping_info, CPid, NbNodes, NRefs, Keys, NKeys, _, _}) ->
     [CPid, Keys, NKeys, NbNodes, NRefs]).
                 
 
-
+%% @doc Deploy a network on a list of hosts.
 deploy ([H | T]) ->
     io:format("Deploying a platform on nodes TODO~n"),
     FirstPid = erlang:spawn(H, ?MODULE, last_init, []),
@@ -102,5 +104,7 @@ deploy (NextPid, [H | T]) ->
 
 % ------- Misc functions; for testing purposes --------
 
+
+%% @doc Asks the platform about its current leadership.
 give_status (Platform) ->
     com:send_msg(Platform, give_status).

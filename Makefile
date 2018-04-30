@@ -8,11 +8,15 @@ all: rebar3
 rebar3 : 
 	wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
 
-run: 
+run:
+	$(REBAR) shell
+
+run_old:
 	erl -pa _build/default/lib/eww/ebin/ -pa _build/default/lib/uuid/ebin/
 
 docs:
-	$(REBAR) edoc skip_deps=true
+	rm -rf ./doc
+	$(REBAR) edoc
 
 test: common_test
 

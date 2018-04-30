@@ -10,6 +10,9 @@
 
 -include_lib("state.hrl").
 
+% -------- Data sending and receiving -------
+
+%% @doc Wait for data sent by another node.
 receive_data () ->
     receive 
         {data, {nosig, Binary, Hash, _}} -> {ok, {Binary, Hash}};
@@ -17,18 +20,26 @@ receive_data () ->
         _ -> {error, wrong_msg_type}
     end.
 
+%% @doc Send unsigned binary data to a node.
 simple_send (Pid, Binary) -> 
     com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}).
 
+%% @doc Send unsigned binary data to a node, specifying the redundancy for it.
 simple_send (Pid, Binary, Replicate) -> 
     com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self(), Replicate}).
 
+%% @doc Send signed binary data to a node.
 signed_send (Pid, Binary, Key) ->
     com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key}). 
 
+%% @doc Send signed binary data to a node, specifying the redundancy for it.
 signed_send (Pid, Binary, Key, Replicate) ->
     com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key, Replicate}). 
 
+
+% -------- Data transfers handler ----------
+
+%% @doc Handler for data packets.
 handle_data ({nosig, Binary, Hash, Pid}, S) ->
     case erlang:phash2(Binary) =:= Hash of
         true -> 
@@ -89,7 +100,9 @@ handle_data ({sig, Binary, Hash, Key}, S) ->
     end.
 
 
+% ------- Data management functions ----------
 
+%% @doc Retrieve a piece of data using its key.
 retrieve_data ({Key, Pid}, Ref, S) ->
     case lists:member(Key, S#state.keys) of
         true ->
@@ -100,6 +113,7 @@ retrieve_data ({Key, Pid}, Ref, S) ->
             S
     end.
 
+%% @doc Delete a specific piece of data.
 delete_data (Key, Ref, S) ->
     erlang:send(S#state.nextpid, com:del_request(Key, Ref)),
     case lists:member(Key, S#state.keys) of
@@ -111,7 +125,7 @@ delete_data (Key, Ref, S) ->
             S
     end.
 
-
+%% @doc Read data on the disk and send unsigned it to a node.
 read_and_send (Filename, Pid) ->
     case file:read_file(Filename) of
         {ok, Binary} ->
@@ -120,6 +134,7 @@ read_and_send (Filename, Pid) ->
             exit(Reason)
     end.
 
+%% @doc Read data on the disk and send it already signed to a node.
 read_and_send (Filename, Pid, Key) ->
     io:format("reading file...~n", []),
     case file:read_file (Filename) of
@@ -133,6 +148,10 @@ read_and_send (Filename, Pid, Key) ->
 % ---------------- Data preservation --------------------
 % When a node is killed, it transfers its data to its peer
 
+
+%% @doc Send all stored data and keys to the next peer.
+send_legacy (S) ->
+    send_data_list (S#state.keys, S#state.nextpid).
 send_data_list ([], _) -> ok;
 send_data_list ([Key | T], Pid) ->
     io:format("Sending file with key ~p to ~p~n", [Key, Pid]),
@@ -141,5 +160,3 @@ send_data_list ([Key | T], Pid) ->
     send_data_list (T, Pid).
 
 
-send_legacy (S) ->
-    send_data_list (S#state.keys, S#state.nextpid).

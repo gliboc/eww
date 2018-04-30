@@ -5,7 +5,7 @@
 -include_lib("state.hrl").
 -include_lib("ping_info.hrl").
 
-
+%% @doc Handler for straightforward commands.
 handle_cmd({sendpid, Pid}, S) -> 
     com:send_pid(Pid, com:pid(S#state.nextpid)),
     S;
@@ -39,7 +39,7 @@ handle_cmd({die, Killer, Client}, S) ->
     S.
 
 
-
+%% @doc Handlers for interpretable messages.
 handle_msg(Msg, Ref, S) ->
     io:format("Agent ~p received msg ~p with ref ~p~n", [erlang:self(), Msg, Ref]),
     io:format("Agent ~p has refs ~p~n", [erlang:self(), S#state.refs]),

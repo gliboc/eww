@@ -1,13 +1,15 @@
 %% Agent to be spawn on the nodes
 
+%% @doc Module containing the functions to create and manage agents, as well as creating a platform.
 -module(agent).
 -export([init/1, loop/1, terminate/2]).
--export([ring_topology/1, last_init/0, ping/1, join/1, new_node/1, 
-         destroy/1, kill/2, init_network/1, start_elect/1]).
+-export([ring_topology/1, join/1, new_node/1, 
+         destroy/1, kill/2, start_elect/1]).
 
 -include_lib("state.hrl").
 
-
+-spec init(NextPid :: pid()) -> #state{}.
+%% @doc Initializes an agent.
 init(NextPid) -> 
     io:format("Agent ~p was succesfully started~n", [erlang:self()]),
 
@@ -22,7 +24,8 @@ init(NextPid) ->
                 elect=sleep,
                 min_cand=Proc}).
 
-
+-spec loop(S::#state{}) -> no_return().
+%% @doc Event-handling loop for the agent.
 loop(S) ->
     receive
         {cmd, Cmd, _} ->
@@ -48,6 +51,8 @@ loop(S) ->
             end
     end.
 
+-spec terminate(KillerPid :: pid(), S :: #state{}) -> no_return().
+%% @doc Quietly terminates the agent, transferring its data to its peer.
 terminate(KillerPid, S) ->
     io:format("I'm ~p and I die now. Pls remember~n", [erlang:self()]),
     io:format("Sending data and keys to ~p~n", [S#state.nextpid]), 
@@ -61,7 +66,6 @@ terminate(KillerPid, S) ->
 
 % -------- Trying a ring topology --------
 
-
 last_init() ->
     io:format("Initiating first agent\n", []),
     receive
@@ -69,7 +73,8 @@ last_init() ->
             init(Pid)
     end.
 
-
+-spec ring_topology (N :: integer()) -> {atom(), pid()}.
+%% @doc Creates a ring-shaped topology of agents of length N.
 ring_topology(N) ->
     io:format("Initiating a ring network with ~p nodes~n", [N]),
     FirstPid = erlang:spawn(agent, last_init, []),
@@ -86,51 +91,45 @@ ring_topology(NextPid, N) ->
 
 
 
-% ------- Distributed ping -----------
-
-ping(Pid) ->
-   erlang:send(Pid, {ping, utils:hash()}).
-
 % -------- Join the topology ----------
 
-join(Pid) ->
-    com:ask_pid(Pid),
+-spec join(Platform :: pid()) -> no_return().
+%% @doc Join a topology as an agent.
+join(Platform) ->
+    com:ask_pid(Platform),
     receive
         {pid, NextPid, _} -> 
             io:format("Received the NextPid ~p for new node~n", [NextPid]),
-            com:change_pid(Pid, erlang:self()),
-            io:format("Sent changePid instruction to ~p~n", [Pid]),
+            com:change_pid(Platform, erlang:self()),
+            io:format("Sent changePlatform instruction to ~p~n", [Platform]),
             init(NextPid)
     end.
 
-new_node(Pid) ->
-    P = erlang:spawn(agent, join, [Pid]),
-    io:format("Initiated new agent with Pid ~p~n", [P]).
+-spec new_node (Platform :: pid()) -> {atom(), pid()}.
+%% @doc Spawn an agent and have it join a topology.
+new_node(Platform) ->
+    NewAgentPid = erlang:spawn(agent, join, [Platform]),
+    {ok, NewAgentPid}.
 
 % ------- Destroy all nodes -------
 
+-spec destroy (Platform :: pid()) -> no_return().
+%% @doc Asks a platform to self-destruct.
 destroy(Platform) ->
     erlang:send(Platform, com:cmd(destroy)).
 
 
 % -------- Kill a node --------
 
+-spec kill (Platform :: pid(), Target :: pid()) -> no_return().
+%% @doc Asks a platform to kill a specific target agent.
 kill(Platform, Target) ->
     erlang:send(Platform, com:cmd({kill,Target, erlang:self()})). 
 
 
 % -------- Start an election --------
 
+-spec start_elect (Pid :: pid()) -> no_return().
+%% @doc Asks an agent to start a leader election.
 start_elect (Pid) ->
     com:send_msg(Pid, start_election).
-
-
-% -------- Init a network for tests ------
-
-init_network(N) ->
-    {Pid, _} = ring_topology(N),
-    io:format("~nPassing a ping on the network~n", []),
-    ping(Pid),
-    Pid.
-
-
