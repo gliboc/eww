@@ -2,11 +2,9 @@
 -export([pull_test/0, terminate_test/0, release_test/0]).
 -include_lib("stdlib/include/assert.hrl").
 
+%% @doc This program tests the ability to store data on a remote node, 
+%% @doc and then retrieve it using the UUID the node provided.
 pull_test () ->
-    io:format("This program tests the ability to store data
-    on a remote node, and then retrieve it using the UUID the
-    node provided~n~n", []),
-    
     {_, Pid} = agent:ring_topology(4),
     transfer:read_and_send("3648.mp4", Pid),
     Key = receive 
@@ -19,11 +17,10 @@ pull_test () ->
     check that it is identical to '3648.mp4'~n", []).
 
 
+%% @doc This program tests the ability of a node killed
+%% @doc remotely to pass its data and keys to the next node. Data should
+%% @doc still be accessible by querying the network with the same key.
 terminate_test () ->
-    io:format("This program tests the ability of a node killed
-    remotely to pass its data and keys to the next node. Data should
-    still be accessible by querying the network with the same key.~n"),
-    
     {_, Pid} = agent:ring_topology(6),
     transfer:read_and_send("3648.mp4", Pid),
     Key = receive 
@@ -45,9 +42,8 @@ terminate_test () ->
         not_ok -> {error, kill_op_failed}
     end.
    
-
+%% @doc Tests the release command.
 release_test () ->
-    io:format("Tests the release command.~n"),
 
     {_, Pid} = agent:ring_topology(6),
     transfer:read_and_send("3648.mp4", Pid),
