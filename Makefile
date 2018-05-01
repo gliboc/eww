@@ -17,6 +17,7 @@ run_old:
 docs:
 	rm -rf ./doc
 	$(REBAR) edoc
+	$(BROWSER) ./doc/overview-summary.html
 
 test: common_test
 

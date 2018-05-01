@@ -8,3 +8,7 @@
    @see com.
    @see handlers.
    @see transfer.
+   @see transfer_tests.
+   @see client_tests.
+   @see ping_tests.
+   @see gui.

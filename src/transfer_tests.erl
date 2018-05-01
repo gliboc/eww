@@ -3,7 +3,7 @@
 -include_lib("stdlib/include/assert.hrl").
 
 %% @doc This program tests the ability to store data on a remote node, 
-%% @doc and then retrieve it using the UUID the node provided.
+%% and then retrieve it using the UUID the node provided.
 pull_test () ->
     {_, Pid} = agent:ring_topology(4),
     transfer:read_and_send("3648.mp4", Pid),
@@ -18,8 +18,8 @@ pull_test () ->
 
 
 %% @doc This program tests the ability of a node killed
-%% @doc remotely to pass its data and keys to the next node. Data should
-%% @doc still be accessible by querying the network with the same key.
+%% remotely to pass its data and keys to the next node. Data should
+%% still be accessible by querying the network with the same key.
 terminate_test () ->
     {_, Pid} = agent:ring_topology(6),
     transfer:read_and_send("3648.mp4", Pid),

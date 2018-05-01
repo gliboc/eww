@@ -60,6 +60,7 @@ init_ping () ->
                keys=[]}.
 
 
+-spec ping (Platform :: pid() | node()) -> {atom(), term()}.
 %% @doc Have a ping go through a network to gather information.
 ping (Platform) ->
     Ping = init_ping(),
@@ -68,12 +69,12 @@ ping (Platform) ->
         FinalPing ->
             io:format("Ping made it through the ring~n",[]),
             pprint_ping(FinalPing),
-            FinalPing
+            {ok, FinalPing}
     after 1000 ->
-        {error, no_response, erlang:self()}
+        {error, {no_response, erlang:self()}}
     end.
 
-
+-spec pprint_ping (Ping :: tuple()) -> no_return().
 %% @doc Pretty-print a ping that has gone through a network.
 pprint_ping({ping_info, CPid, NbNodes, NRefs, Keys, NKeys, _, _}) ->
     io:format
@@ -85,7 +86,7 @@ pprint_ping({ping_info, CPid, NbNodes, NRefs, Keys, NKeys, _, _}) ->
     Number of messages exchanged: ~p~n",
     [CPid, Keys, NKeys, NbNodes, NRefs]).
                 
-
+-spec deploy (NetworkList :: [pid() | node()]) -> {atom(), pid() | node()}.
 %% @doc Deploy a network on a list of hosts.
 deploy ([H | T]) ->
     io:format("Deploying a platform on nodes TODO~n"),

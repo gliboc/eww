@@ -3,11 +3,9 @@
 -include_lib("wx/include/wx.hrl").
 -export([init/1]).
 
+-spec init(Platform :: node()) -> no_return().
+%% @doc Starts a window communicating with a platform.
 init(Platform) ->
-    %catch_exception (true),
-    %My_wx_dir = code:lib_dir(wx),
-    %rr (My_wx_dir ++ "/include/wx,hrl"),
-    %rr (My_wx_dir ++ "/src/wxe,hrl"),
     Wx=wx:new(),
     F=wxFrame:new(Wx, -1, "eww interface"),
     wxFrame:createStatusBar(F), 

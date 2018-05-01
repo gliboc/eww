@@ -1,10 +1,10 @@
-Question 1
+**Question 1**
 
 - [x] a) Initialize an agent using `agent:init`, or simply by spawning its core function, `agent:loop`. This loop calls differents handlers to treat the messages it receives. These handlers are defined in `handlers.erl` and `transfer.erl`.
          - [x] test `init` agent
          - [x] test `loop` function
      - [x] test `loop` handlers
-- [x] b) Spawning a ring-shaped topology with `agent:ring_topology`.
+- [x] b) Spawning a ring-shaped topology with `agent:ring_topology(N)`, where N is the number of nodes you desire.
   - [x] test:
         - [x] `ring_topology` 
         - [x] `last_init` 
@@ -16,16 +16,16 @@ Question 1
   - [x] test `kill`
       - works ok for any targeted node
   - [x] `destroy`
-- [ ] e) / Use 'Naming processes' section of LYEFGG
+- [ ] e) To be implemented in the module `fault.erl`.
 
 
 
 
-Question 2
+**Question 2**
 
 - [x] a) `com:broadcast` makes sure a Msg is delivered to every node in the system. This might be redundant with certain types of messages that are automatically transmitted, but it doesn't cause any errors. This is great to be used to start an election for example, by sending the token `start_election` to everyone.
-  - [x] test
-- [ ] b) There is no scatter algorithm in my network. The load balancing is achieved in this way:
+  - [x] test ok
+- [x] b) There is no scatter algorithm in my network. The load balancing is achieved in this way:
   - When a node wants to store data on the platform, it sends a `store_request` containing the size of the file to store
   - A node receiving a `store_request` can either approve, or send the Pid of its next peer for it to receive the data
     - This simple algorithm achieves load balancing in O(n), which could certainly be improved.
@@ -37,50 +37,55 @@ Question 2
 
 
 
-Question 3
+**Question 3**
 
 - [x] a) `handle_data` is able to receive a signed or unsigned piece of data. If it's unsigned, there should be a Pid in the message to which it sends an UUID key for retrieving the data. Else, it simply stores both the data and the key. Also, it stores its content in a `data/` dir.
-    - [x] tested with a video file
+      - [x] tested with a video file
 - [x] b) done using `retrieve_data` which is called when a node receives a request with a key that's in its keys list. If it hasn't got it, it sends the request to its next peer. If the key is never found, `fail_msg` warns the client. Todo : recycle `fail_msg`
-  - [x] test
+  - [x] test ok
 - [x] c) The terminate function transfers all of a node's data and keys to its peer. It sends pre-signed data to its peer, so the peer doesn't have to generate an UUID; it just writes the data and stores the key as its own.
   - [x] test function : `transfer_tests:terminate_test`
 - [x] d) A message, `{del, Key}`, can be passed around to delete the associated file from all nodes of the network.
-  - [x] test
-- [ ] e)
-- [ ] f)
-- [ ] g)
+  - [x] test ok
+- [x] e) This is achieved by the `store_request` mechanism, when an overloaded node redirects incoming data to its peer.
+  - [x] test ok
+- [x] f) Data replication is achieved by using a default redundancy of 3 when transferring data to a node. This is embedded in the tuple containing the data during data transfers. See `handle_data`.
+- [x] g) I am building a graphical user interface in the module `gui.erl`. For the moment, it is only a showcase of what the interface will be; all the buttons are not fully functionnal. To test it:
+  - generate a network with `{ok, Platform} = agent:ring_topology(10)`
+  - start the GUI to interact with the platform `gui:init(Platform)`
+  - try using the ping button !
 
 
 
-Question 4 CLI `client.erl`
 
-- [x] a) Function `client:start`. Very basic atm
-      - [ ] test
-- [x] b) Function `client:retire`. Sketchy at best.
-  - [ ] test
-- [x] c) `client:push` function. Very bad atm : it just sends data to the first node it knows about.
-  - [ ] test
+**Question 4** CLI `client.erl`
+
+- [x] a) Function `client:start`
+  - [x] test ok
+- [x] b) Function `client:stop`
+  - [x] test ok
+- [x] c) `client:push` 
+  - [x] test ok
 - [x] d) This is the `client:pull` function. It stores its data in the `data_rcv` directory,.
-  - [x] test
-- [x] e) Function `client:release`, using a msg structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`. This is actually the same as q3 d)
+  - [x] test ok
+- [x] e) Function `client:release`, using a message structure caught by `handlers:handle_msg` , treated by `handlers:process_msg`, executed by `transfer:delete_data`. This is actually the same as q3 d)
   - [x] test `release_test` function, using `?assert` macro 
-- [x] f) Using `client:ping` : the ping goes through all the network, adding up the number of nodes, the number of hashes kept (ie the number of messages that passed through the network), and the number of keys (ie the number of files that are being kept).
+- [x] f) Using `client:ping` : the ping goes through all the network, adding up the number of nodes, the number of hashes kept (ie the number of messages that passed through the network), and the number of keys (ie the number of files that are being kept). It is also possible to measure the time for this ping to go through the whole networks for differents sizes of networks, using `ping_tests.erl`. It gives a list of couples (NumberOfNodes, Time), where Time is measured in milliseconds.
   - [x] test - works fine
-  - [ ] Todo: find a way to give out the total size of the files, to give node-specific information (by naming them ?), and to find the size of the biggest/lowest file that is being stored. Other cool data that would require nodes to maintain an history : size of data that was exchanged since the network started, number of files since the network started, number of push/pull operations, up-time of each node, ping time of each node in ms, ping time of the global network.
+  - [ ] find a way to give out the total size of the files, to give node-specific information (by naming them ?), and to find the size of the biggest/lowest file that is being stored. Other cool data that would require nodes to maintain an history: size of data that was exchanged since the network started, number of files since the network started, number of push/pull operations, up-time of each node, ping time of each node in ms, ping time of the global network.
 - [x] g) `client:deploy` deploy a ring-shaped topology of nodes using the `Nodes` list of adresses.
-  - [ ] test
+  - [x] test ok
 
 
 
 
-Others:
+**Others:**
 
-- [ ] Implement authentification using indigo-dc/oidcc erlang implementation of the OpenId Connect protocol
+- [ ] Implement authentification using indigo-dc/oidcc's erlang implementation of the OpenId Connect protocol
 
-- [ ] Have functions reply with `{ok, Result}` or `{error, Reason}` forms, and log the errors
+- [ ] Have functions reply with `{ok, Result}` or `{error, Reason}` forms, and log the errors (almost done)
 
-- [ ] Static types using `-spec` (in progress)
+- [x] Static types using `-spec` 
 
 - [x] Type analysis using Dialyzer
 
@@ -90,18 +95,21 @@ Others:
 
 
 
-Problems:
+**Problems:**
 
 - [ ] when a node dies, the redundancy number of its data is reduced by 1, and there is no control mechanism to ensure it goes up afterwards. So, if all the original nodes die, data may disappear from the network. A cool solution would be to make all copies temporary, and renew them or delete them according to the distance from the key holder. However, for the moment, all the file-holders are also key-holders and there are no difference between them. I could define a leader for each key, and when this node dies, a leader election determines the new leader (among key-holders only).
 
-  ​
+  
 
-
-
-What I'll probably won't do be doing, but found interesting:
+**What I'll probably won't do be doing, but found interesting:**
 
 - [ ] routing using the key. In algorithms such as Chord or Kademlia, the structure of the key helps in finding the node where this data is stored. This leads to faster lookup in theory.
-    In practice, I'm not interested in very big scalability just yet and prefer to implement features and fault tolerance, since I plan to use this software for my own purposes.
+
+  In practice, I'm not interested in very big scalability just yet and prefer to implement features and fault tolerance, since I plan to use this software for my own purposes.
+
+  Furthermore, I wanted to implement my own architecture, and eventually incorporate fancy features if I   come to find them relevant.
+
 - [ ] An elaborate topology. I found de Bruijn graphs quite interesting, as in Koorde they allow an optimal lookup for data ($$O(\log(n))$$) - the structure in itself is also interesting. But - creating and managing de Bruijn graphs is difficult and less documented than rings. And, again, I wouldn't see much difference in my case.
+
 - [ ] Termination checks and passive/active nodes. This is useful in order to prevent some activities from being launched during a time when processes are busy doing some critical task. Before implementing this, I want to identify real errors that could be solved using this safety check.
   - Possibility : wait for some large data to have been completely scattered on the ring before querying it

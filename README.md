@@ -20,6 +20,11 @@ directories inside `_build/`.
 Then, type `make run` to start an erlang shell which imports this code, and use the defined functions
 to spawn and manage a topology of nodes.
 
+### Documentation
+
+You can generate and visualize the documentation with `make doc`. The overview should open in 
+a browser window. If you don't have a browser, the docs are generated in the `doc` folder.
+
 ### Constellation of devices
 
 In order to showcase the use of this program, I would like to create a list
@@ -33,30 +38,23 @@ nodes of the topology.
 The current list contains only one device :
 - Raspberry Zero W
 
-### Documentation
-
-You can generate a basic documentation with `make doc`, but this is not very helpful yet. The `todo.md` file is less structured, but it gives an overview of the features of the project, and which functions tackle them particularly.
-
-After some time, the information inside `todo.md` should be converted to the generated doc.
-
 ## Architecture
 
 ### Agent
 
 The `agent.erl` module contains all the functions for spawning a topology with
-listening agents. The supported operations on the agents are :
-	
-- `kill` : kill a specific node and reshape the ring. It also makes the target node give all its (key, data) pairs to its next peer.
+listening agents. An agent can be `terminated` to shut down and transfer its (key, data)
+pairs to its next peer. It can be `destroyed`; in that case, the whole network self-destroys.
+It can `join` a topology, and can be contacted in various ways as it handles commands, messages
+and data transfers.
 
-- `destroy` : destruct all the nodes
+### Client
 
-- `join` / `new_node` : spawn a node and make it join the topology
+The client allows to communicate with a platform using any node's Pid. It can `push`
+or `pull` files from it, ask for some files to be deleted with `release`, and `stop` nodes or `start` them. 
 
-- `ping` : pass a ping through the network. The ping stores a lot of information that it gathers along its path, such as the number of nodes, the list of keys kept in the network, or the number of messages exchanged. If a ping ends correctly, it means that the whole system is sound.
+The `client.erl` module also offers the possibility to pass pass a `ping` through the network. The ping stores a lot of information that it gathers along its path, such as the number of nodes, the list of keys kept in the network, or the number of messages exchanged. If a ping ends correctly, it means that the whole system is sound.
 
-  ​
-
-## Communication system
 
 ### Topology
 
@@ -64,14 +62,16 @@ This application uses a ring-shaped topology that is mostly uni-directionnal. Ea
 
 #### Fault tolerance
 
-This topology is very useful for checking the integrity of the network: you can send a message throughout the whole system and see if it makes it through the ring. When it doesn't make it, one node at the cut extremity is asked to repair the network. It can be done by trying to respawn an agent on the unresponsive node. If it can't be done, there are two possibilities:
+/!\ Disclaimer /!\ This part is not fully implemented yet: the `fault.erl` module has yet to be tested.
+
+This topology is very useful for simply checking the integrity of the network: you can send a message throughout the whole system and see if it makes it through the ring. When it doesn't make it, one node at the cut extremity is asked to repair the network. It can be done by trying to respawn an agent on the unresponsive node. If it can't be done, there are two possibilities:
 
  - This node has a valid sequence of successor nodes, and it connects to its next node
  - If this doesn't work, the node that checked the sanity of the network can recover the address of the node on the other extremity, and give it to this node.
 
 This last approach is problematic because it might create a forest of distinct rings, so I have disabled it until I can find a way to tackle this issue.
 
-Therefore, the nodes are forced to regularly check they have a list of correct successor nodes. This is done by the function `fault:check_successors` which is activated when the token `sanity_check` passes through the system. This token is regularly sent by the leader node.
+Therefore, the nodes are forced to regularly check if they have a list of correct successor nodes. This is done by the function `fault:check_successors` which is activated when the token `sanity_check` passes through the system. This token is regularly sent by a monitor node, which is spawned by the current leader of the network.
 
 #### Communication system
 
@@ -79,7 +79,7 @@ The nodes communicate with four different type of message :
 - commands `{cmd, Cmd, Ref}`
 - packets `{pack, Msg, Ref}`
 - data streams `{data, Msg, Ref}`
-- acknowledgements `{ack, Ref}`
+- acknowledgements `{ack, Ref}` and `{check, Ref}`
 
 The main difference between `commands` and `packets` are that commands can be 
 adressed to a single node of the network whereas packets should run through
@@ -88,21 +88,20 @@ the entire network.
 The `Id` is a hash of the node's Pid and processor time obtained with `now()`.
 It is used to check if a message was received before.
 
-`acknowledgements`, though not implemented yet, should be used in order to confirm
+`acknowledgements` and `checks`, though not implemented yet, should be used in order to confirm
 no messages were lost, and eventually to detect that a node is sleeping/dead.
 
 ### Detecting failure
 
 In order to detect failing nodes, I had two main ideas :
 
-- implement an acknowledgement system where each communication would receive a confirmation. If a node doesn't acknowledge, 
-- after some time, it is considered dead/sleeping
-- implement periodic checks :
+- Implement an acknowledgement system where each communication would receive a confirmation. If a node doesn't acknowledge, 
+  after some time, it is considered dead/sleeping
+- Implement periodic checks :
     - local checks, where a node checks on its neighboor
     - global checks, where an elected node passes a token through the ring and launches a restructuration if the token doesn't go through
 
-Before implementing, I decided that I prefered the latter option. In the first option, the number of acknowledgements would scale linearly with the number of API calls, and I don't think that's a good thing.
-
+Before implementing, I decided that I prefered the latter option. In the first option, the number of acknowledgements would scale linearly with the number of API calls, and I don't think like that idea.
 
 
 ## Analysis and testing
@@ -113,7 +112,7 @@ This code is type-checked using `dialyzer`, which you can do by calling `make di
 
 ### Tests
 
-There are modules being build with the names `?MODULE_tests.erl` in order to test the most important functions in the app. For example, `transfer_tests.erl` tests the data transfer and other features.
+There are modules with the names `?MODULE_tests.erl` in order to test the most important functions in the app. For example, `transfer_tests.erl` tests the data transfer and other features.
 
 
 ## Going further
@@ -126,12 +125,11 @@ check the sanity of the network and try to repair it.
 
 But the paper [@fischer1985impossibility] discouraged me from doing so.
 
-So I decided to resort to Erlang builtin's monitors and supervisors, that allow to report problems that
-occurred in synchronous communications, and react accordingly. Though I will try to implement a self-stabilizing
-algorithm to make sure there is always a supervisor up and running.
+So I decided to resort to Erlang's supervisor model, that allow to report problems that
+occurred in synchronous communications, and react accordingly. 
 
 I wanted to try an asynchronous solution because I dislike having to duplicate communications to send
-acknowledgement and I thought it would lead to faster communications in the network. 
+acknowledgements and I thought it would lead to faster communications in the network. 
 
 
 
