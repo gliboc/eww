@@ -36,7 +36,7 @@ pull (Name, UUID, Platform) ->
 
         {ok, {Binary, Hash}} -> 
             Filename = "data_rcv/" ++ Name,
-            io:format("Writing file ~p~n", [Filename]),
+            io:format("Writing file in ~p~n", [Filename]),
             case erlang:phash2(Binary) =:= Hash of
                 true ->
                     file:write_file(Filename, Binary);

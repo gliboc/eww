@@ -15,9 +15,12 @@
 %% @doc Wait for data sent by another node.
 receive_data () ->
     receive 
+        {pack, {store_request, _, Pid}, _} -> 
+            erlang:send(Pid, ok),
+            receive_data();
         {data, {nosig, Binary, Hash, _}} -> {ok, {Binary, Hash}};
         {error, Reason} -> {error, Reason};
-        _ -> {error, wrong_msg_type}
+        R -> {wrong_msg_type, R}
     end.
 
 %% @doc Send unsigned binary data to a node.
@@ -125,7 +128,7 @@ delete_data (Key, Ref, S) ->
             S
     end.
 
-%% @doc Read data on the disk and send unsigned it to a node.
+%% @doc Read data on the disk and send it unsigned to a node.
 read_and_send (Filename, Pid) ->
     case file:read_file(Filename) of
         {ok, Binary} ->

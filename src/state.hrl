@@ -1,8 +1,8 @@
 -record(state, {proc,
-                df,
+                df=1000000,
                 elect,
                 min_cand,
                 nextpid,
-                refs,
-                keys,
+                refs=[],
+                keys=[],
                 files}).

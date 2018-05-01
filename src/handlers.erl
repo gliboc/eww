@@ -56,10 +56,13 @@ handle_msg(Msg, Ref, S) ->
 process_msg ({store_request, Size, Pid}, Ref, S) ->
     case Size > S#state.df of
     true ->
+        io:format("There is no room for this data~n"),
         com:send_msg(Pid, {not_enough_memory, S#state.nextpid, Ref});
     false ->
-        com:send_msg(Pid, ok)
-    end;
+        io:format("Store request accepted~n"),
+        erlang:send(Pid, ok)
+    end,
+    S;
 
 process_msg({bcast, Msg}, Ref, S) ->
     com:send_msg(S#state.nextpid, {bcast, Msg}, Ref),
