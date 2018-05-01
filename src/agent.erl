@@ -18,6 +18,7 @@ init(NextPid) ->
 
     Proc = uuid:uuid4(),
     loop (#state{nextpid=NextPid, 
+                 df=1000000,
                 proc=Proc,
                 refs=[],
                 keys=[],

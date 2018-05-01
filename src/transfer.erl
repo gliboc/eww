@@ -22,19 +22,19 @@ receive_data () ->
 
 %% @doc Send unsigned binary data to a node.
 simple_send (Pid, Binary) -> 
-    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}).
+    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self()}, byte_size(Binary)).
 
 %% @doc Send unsigned binary data to a node, specifying the redundancy for it.
 simple_send (Pid, Binary, Replicate) -> 
-    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self(), Replicate}).
+    com:send_data(Pid, {nosig, Binary, erlang:phash2(Binary), erlang:self(), Replicate}, byte_size(Binary)).
 
 %% @doc Send signed binary data to a node.
 signed_send (Pid, Binary, Key) ->
-    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key}). 
+    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key}, byte_size(Binary)). 
 
 %% @doc Send signed binary data to a node, specifying the redundancy for it.
 signed_send (Pid, Binary, Key, Replicate) ->
-    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key, Replicate}). 
+    com:send_data(Pid, {sig, Binary, erlang:phash2(Binary), Key, Replicate}, byte_size(Binary)). 
 
 
 % -------- Data transfers handler ----------

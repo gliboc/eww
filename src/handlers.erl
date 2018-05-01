@@ -52,6 +52,15 @@ handle_msg(Msg, Ref, S) ->
             process_msg(Msg, Ref, S#state{refs=S#state.refs++[Ref]})
     end.
 
+
+process_msg ({store_request, Size, Pid}, Ref, S) ->
+    case Size > S#state.df of
+    true ->
+        com:send_msg(Pid, {not_enough_memory, S#state.nextpid, Ref});
+    false ->
+        com:send_msg(Pid, ok)
+    end;
+
 process_msg({bcast, Msg}, Ref, S) ->
     com:send_msg(S#state.nextpid, {bcast, Msg}, Ref),
     process_msg(Msg, Ref, S);

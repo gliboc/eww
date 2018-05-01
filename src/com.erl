@@ -3,7 +3,7 @@
 -module(com).
 -export([msg/1, cmd/1, pid/1, data/1, data_request/2, del_request/2]).
 -export([ask_pid/1, change_pid/2, send_msg/2, send_ping/3, broadcast/2, send_msg/3,
-         send_cmd/2, send_cmd/3, send_pid/2, send_data/2]).
+         send_cmd/2, send_cmd/3, send_pid/2, send_data/3, send_data/4]).
 
 
 % ------ Message constructors ----------
@@ -30,8 +30,22 @@ send_cmd(Pid, Cmd) ->
 send_cmd(Pid, Cmd, Ref) ->
     erlang:send(Pid, {cmd, Cmd, Ref}).
 
-send_data(Pid, Data) ->
-    erlang:send(Pid, {data, Data}).
+send_data(Pid, Data, Size) ->
+    com:send_msg(Pid, {store_request, Size, erlang:self()}),
+    receive
+        ok -> erlang:send(Pid, {data, Data});
+        {not_enough_memory, NewPid, Ref} ->
+            send_data(NewPid, Data, Size, Ref)
+    end.
+
+send_data(Pid, Data, Size, Ref) ->
+    com:send_msg(Pid, {store_request, Size, erlang:self()}, Ref),
+    receive 
+        ok ->
+            erlang:send(Pid, {data, Data});
+        {not_enough_memory, NewPid, Ref} ->
+            send_data(NewPid, Data, Size, Ref)
+    end.
 
 send_msg (Pid, Msg) ->
     erlang:send(Pid, msg(Msg)).
