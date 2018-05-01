@@ -2,7 +2,7 @@
 
 %% @doc Module containing the functions to create and manage agents, as well as creating a platform.
 -module(agent).
--export([init/1, loop/1, terminate/2]).
+-export([init/1, last_init/0, loop/1, terminate/2]).
 -export([ring_topology/1, join/1, new_node/1, 
          destroy/1, kill/2, start_elect/1]).
 
